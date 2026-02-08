@@ -8,6 +8,7 @@ from typing import Any
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -43,8 +44,17 @@ async def async_setup_entry(
                     WartungsplanerTaskSensor(coordinator, task_id)
                 )
 
-        # Remove tracked IDs for deleted tasks
+        # Remove entities for deleted tasks
         current_ids = set(tasks.keys())
+        removed_ids = known_task_ids - current_ids
+        if removed_ids:
+            ent_reg = er.async_get(hass)
+            for task_id in removed_ids:
+                entity_id = ent_reg.async_get_entity_id(
+                    "sensor", DOMAIN, f"wartungsplaner_task_{task_id}"
+                )
+                if entity_id:
+                    ent_reg.async_remove(entity_id)
         known_task_ids.intersection_update(current_ids)
 
         if new_entities:
