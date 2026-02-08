@@ -37,6 +37,7 @@ def async_register_websocket_api(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_delete_category)
     websocket_api.async_register_command(hass, ws_add_custom_template)
     websocket_api.async_register_command(hass, ws_delete_custom_template)
+    websocket_api.async_register_command(hass, ws_restore_hidden_templates)
 
 
 def _get_coordinator(hass: HomeAssistant):
@@ -216,9 +217,13 @@ def ws_get_templates(
 ) -> None:
     """Handle get templates WebSocket command."""
     store = _get_store(hass)
-    builtin = get_templates()
+    builtin = [t for t in get_templates() if t["id"] not in store.hidden_templates]
     custom = list(store.custom_templates.values())
-    connection.send_result(msg["id"], {"templates": builtin + custom})
+    hidden_count = len(store.hidden_templates)
+    connection.send_result(msg["id"], {
+        "templates": builtin + custom,
+        "hidden_count": hidden_count,
+    })
 
 
 @websocket_api.websocket_command(
@@ -416,10 +421,37 @@ async def ws_delete_custom_template(
     connection: websocket_api.ActiveConnection,
     msg: dict[str, Any],
 ) -> None:
-    """Handle delete custom template WebSocket command."""
+    """Handle delete template WebSocket command (custom or builtin)."""
     store = _get_store(hass)
-    success = await store.async_delete_custom_template(msg["template_id"])
-    if not success:
-        connection.send_error(msg["id"], "not_found", "Custom template not found")
+    template_id = msg["template_id"]
+
+    # Try custom template first
+    if template_id in store.custom_templates:
+        await store.async_delete_custom_template(template_id)
+        connection.send_result(msg["id"], {"success": True})
         return
+
+    # Try hiding a builtin template
+    if get_template_by_id(template_id):
+        await store.async_hide_builtin_template(template_id)
+        connection.send_result(msg["id"], {"success": True})
+        return
+
+    connection.send_error(msg["id"], "not_found", "Template not found")
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "wartungsplaner/restore_hidden_templates",
+    }
+)
+@websocket_api.async_response
+async def ws_restore_hidden_templates(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Handle restore hidden builtin templates WebSocket command."""
+    store = _get_store(hass)
+    await store.async_restore_hidden_templates()
     connection.send_result(msg["id"], {"success": True})

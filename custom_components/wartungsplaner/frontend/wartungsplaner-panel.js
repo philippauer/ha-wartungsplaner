@@ -58,6 +58,9 @@ const STRINGS = {
     saveAsTemplate: "Als Vorlage speichern",
     deleteTemplate: "Vorlage löschen",
     customTemplate: "Eigene Vorlage",
+    templateSaved: "Vorlage gespeichert",
+    hiddenTemplates: "ausgeblendete Vorlage(n)",
+    restoreTemplates: "Wiederherstellen",
     priorities: {
       low: "Niedrig",
       medium: "Mittel",
@@ -126,6 +129,9 @@ const STRINGS = {
     saveAsTemplate: "Save as template",
     deleteTemplate: "Delete template",
     customTemplate: "Custom template",
+    templateSaved: "Template saved",
+    hiddenTemplates: "hidden template(s)",
+    restoreTemplates: "Restore",
     priorities: {
       low: "Low",
       medium: "Medium",
@@ -170,6 +176,7 @@ class WartungsplanerPanel extends HTMLElement {
     this._filterCategory = "all";
     this._filterStatus = "all";
     this._searchQuery = "";
+    this._hiddenTemplateCount = 0;
     this._lang = "de";
   }
 
@@ -234,6 +241,7 @@ class WartungsplanerPanel extends HTMLElement {
     try {
       const result = await this._hass.callWS({ type: "wartungsplaner/get_templates" });
       this._templates = result.templates || [];
+      this._hiddenTemplateCount = result.hidden_count || 0;
     } catch (e) {
       console.error("Wartungsplaner: Failed to load templates", e);
     }
@@ -498,9 +506,9 @@ class WartungsplanerPanel extends HTMLElement {
                     </div>
                   </div>
                   <div class="template-actions">
-                    ${!tmpl.builtin ? `<button class="btn btn-small btn-danger delete-template-btn" data-template-id="${tmpl.id}" title="${t.deleteTemplate}">
+                    <button class="btn btn-small btn-danger delete-template-btn" data-template-id="${tmpl.id}" title="${t.deleteTemplate}">
                       <ha-icon icon="mdi:delete"></ha-icon>
-                    </button>` : ""}
+                    </button>
                     <button class="btn btn-primary btn-small add-template-btn" data-template-id="${tmpl.id}">
                       <ha-icon icon="mdi:plus"></ha-icon>
                     </button>
@@ -514,6 +522,14 @@ class WartungsplanerPanel extends HTMLElement {
         `
           )
           .join("")}
+        ${this._hiddenTemplateCount > 0 ? `
+          <div class="restore-hidden">
+            <span>${this._hiddenTemplateCount} ${t.hiddenTemplates}</span>
+            <button class="btn btn-small" id="restoreTemplatesBtn">
+              <ha-icon icon="mdi:restore"></ha-icon> ${t.restoreTemplates}
+            </button>
+          </div>
+        ` : ""}
       </div>
     `;
   }
@@ -615,6 +631,12 @@ class WartungsplanerPanel extends HTMLElement {
         this._deleteCustomTemplate(btn.dataset.templateId);
       });
     });
+
+    // Restore hidden templates button
+    const restoreBtn = root.getElementById("restoreTemplatesBtn");
+    if (restoreBtn) {
+      restoreBtn.addEventListener("click", () => this._restoreHiddenTemplates());
+    }
   }
 
   _showTaskDialog(task = null) {
@@ -873,7 +895,10 @@ class WartungsplanerPanel extends HTMLElement {
           </div>
           <div class="form-group">
             <label>${t.categoryIcon}</label>
-            <input type="text" id="newCatIcon" value="mdi:dots-horizontal" />
+            <div class="icon-input-row">
+              <ha-icon id="iconPreview" icon="mdi:dots-horizontal"></ha-icon>
+              <input type="text" id="newCatIcon" value="mdi:dots-horizontal" />
+            </div>
           </div>
           <div class="dialog-actions">
             <button class="btn" id="dialogClose">${t.close}</button>
@@ -899,6 +924,11 @@ class WartungsplanerPanel extends HTMLElement {
       }
     });
 
+    dialog.querySelector("#newCatIcon").addEventListener("input", (e) => {
+      const preview = dialog.querySelector("#iconPreview");
+      if (preview) preview.setAttribute("icon", e.target.value || "mdi:dots-horizontal");
+    });
+
     dialog.querySelector("#dialogAddCat").addEventListener("click", async () => {
       const nameDe = dialog.querySelector("#newCatNameDe").value.trim();
       const nameEn = dialog.querySelector("#newCatNameEn").value.trim();
@@ -915,6 +945,7 @@ class WartungsplanerPanel extends HTMLElement {
         dialog.querySelector("#newCatNameDe").value = "";
         dialog.querySelector("#newCatNameEn").value = "";
         dialog.querySelector("#newCatIcon").value = "mdi:dots-horizontal";
+        dialog.querySelector("#iconPreview").setAttribute("icon", "mdi:dots-horizontal");
         await this._loadCategories();
         renderList();
       } catch (e) {
@@ -938,9 +969,32 @@ class WartungsplanerPanel extends HTMLElement {
       });
       // Reload templates so next visit to templates tab shows the new one
       this._templates = [];
+      this._showToast(this.t.templateSaved);
     } catch (e) {
       console.error("Wartungsplaner: Failed to save as template", e);
     }
+  }
+
+  async _restoreHiddenTemplates() {
+    try {
+      await this._hass.callWS({ type: "wartungsplaner/restore_hidden_templates" });
+      await this._loadTemplates();
+      this._render();
+    } catch (e) {
+      console.error("Wartungsplaner: Failed to restore templates", e);
+    }
+  }
+
+  _showToast(message) {
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.textContent = message;
+    this.shadowRoot.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add("toast-visible"));
+    setTimeout(() => {
+      toast.classList.remove("toast-visible");
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
   }
 
   async _deleteCustomTemplate(templateId) {
@@ -1590,6 +1644,57 @@ class WartungsplanerPanel extends HTMLElement {
       .category-item-name {
         flex: 1;
         font-size: 14px;
+      }
+
+      /* Toast notification */
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: #323232;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s, transform 0.3s;
+        pointer-events: none;
+      }
+
+      .toast-visible {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* Icon input with preview */
+      .icon-input-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .icon-input-row ha-icon {
+        --mdc-icon-size: 24px;
+        color: var(--wp-primary);
+        flex-shrink: 0;
+      }
+
+      .icon-input-row input {
+        flex: 1;
+      }
+
+      /* Restore hidden templates */
+      .restore-hidden {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 16px;
+        margin-top: 12px;
+        color: var(--wp-text-secondary);
+        font-size: 13px;
       }
 
       /* Responsive */

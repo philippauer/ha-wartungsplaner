@@ -60,6 +60,7 @@ class WartungsplanerStore:
         self._tasks: dict[str, dict[str, Any]] = {}
         self._custom_templates: dict[str, dict[str, Any]] = {}
         self._custom_categories: dict[str, dict[str, Any]] = {}
+        self._hidden_templates: set[str] = set()
 
     @property
     def tasks(self) -> dict[str, dict[str, Any]]:
@@ -76,6 +77,11 @@ class WartungsplanerStore:
         """Return all custom categories."""
         return self._custom_categories
 
+    @property
+    def hidden_templates(self) -> set[str]:
+        """Return IDs of hidden builtin templates."""
+        return self._hidden_templates
+
     async def async_load(self) -> None:
         """Load data from storage."""
         data = await self._store.async_load()
@@ -85,6 +91,7 @@ class WartungsplanerStore:
             self._tasks = {}
         self._custom_templates = (data or {}).get("custom_templates", {})
         self._custom_categories = (data or {}).get("custom_categories", {})
+        self._hidden_templates = set((data or {}).get("hidden_templates", []))
         _LOGGER.debug("Loaded %d tasks from storage", len(self._tasks))
 
     async def async_save(self) -> None:
@@ -93,6 +100,7 @@ class WartungsplanerStore:
             "tasks": self._tasks,
             "custom_templates": self._custom_templates,
             "custom_categories": self._custom_categories,
+            "hidden_templates": list(self._hidden_templates),
         })
 
     async def async_add_task(self, task_data: dict[str, Any]) -> dict[str, Any]:
@@ -279,6 +287,18 @@ class WartungsplanerStore:
         await self.async_save()
         _LOGGER.debug("Added custom category: %s (%s)", category["name_de"], cat_id)
         return category
+
+    async def async_hide_builtin_template(self, template_id: str) -> None:
+        """Hide a builtin template."""
+        self._hidden_templates.add(template_id)
+        await self.async_save()
+        _LOGGER.debug("Hidden builtin template: %s", template_id)
+
+    async def async_restore_hidden_templates(self) -> None:
+        """Restore all hidden builtin templates."""
+        self._hidden_templates.clear()
+        await self.async_save()
+        _LOGGER.debug("Restored all hidden builtin templates")
 
     async def async_delete_category(self, cat_id: str) -> bool:
         """Delete a custom category. Fails if tasks use it."""
