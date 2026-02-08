@@ -1,0 +1,28 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Wartungsplaner Einrichtung",
+        "description": "Konfigurieren Sie den Wartungsplaner für die Hauswartungsplanung.",
+        "data": {
+          "due_soon_days": "Tage vor Fälligkeit als 'Bald fällig' markieren",
+          "enable_notifications": "Statusänderungs-Events aktivieren"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Der Wartungsplaner ist bereits konfiguriert."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Wartungsplaner Optionen",
+        "data": {
+          "due_soon_days": "Tage vor Fälligkeit als 'Bald fällig' markieren",
+          "enable_notifications": "Statusänderungs-Events aktivieren"
+        }
+      }
+    }
+  }
+}

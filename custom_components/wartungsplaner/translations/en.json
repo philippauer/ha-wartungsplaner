@@ -1,0 +1,28 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Wartungsplaner Setup",
+        "description": "Configure the Wartungsplaner integration for household maintenance tracking.",
+        "data": {
+          "due_soon_days": "Days before due to mark as 'due soon'",
+          "enable_notifications": "Enable status change events"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Wartungsplaner is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Wartungsplaner Options",
+        "data": {
+          "due_soon_days": "Days before due to mark as 'due soon'",
+          "enable_notifications": "Enable status change events"
+        }
+      }
+    }
+  }
+}
