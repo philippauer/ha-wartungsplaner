@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+
+  <!-- House shape (roof + body) -->
+  <path d="
+    M256 56
+    L440 224
+    L400 224
+    L400 440
+    L112 440
+    L112 224
+    L72 224
+    Z
+  " fill="#03A9F4"/>
+
+  <!-- Checklist (centered in house body) -->
+  <g transform="translate(168, 260)">
+    <!-- Check 1 -->
+    <polyline points="0,0 8,10 24,-10" fill="none" stroke="white" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="40" y1="0" x2="140" y2="0" stroke="white" stroke-width="7" stroke-linecap="round" opacity="0.45"/>
+    
+    <!-- Check 2 -->
+    <polyline points="0,48 8,58 24,38" fill="none" stroke="white" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="40" y1="48" x2="140" y2="48" stroke="white" stroke-width="7" stroke-linecap="round" opacity="0.45"/>
+    
+    <!-- Unchecked 3 (pending task, orange accent) -->
+    <rect x="-2" y="86" width="26" height="26" rx="4" fill="none" stroke="#FF9800" stroke-width="5"/>
+    <line x1="40" y1="99" x2="140" y2="99" stroke="white" stroke-width="7" stroke-linecap="round" opacity="0.45"/>
+  </g>
+
+  <!-- Clock badge (bottom-right) -->
+  <g transform="translate(404, 404)">
+    <circle cx="0" cy="0" r="68" fill="white"/>
+    <circle cx="0" cy="0" r="60" fill="#FF9800"/>
+    
+    <!-- Clock markers -->
+    <circle cx="0" cy="-42" r="4" fill="white"/>
+    <circle cx="42" cy="0" r="4" fill="white"/>
+    <circle cx="0" cy="42" r="4" fill="white"/>
+    <circle cx="-42" cy="0" r="4" fill="white"/>
+    
+    <!-- Hands -->
+    <line x1="0" y1="2" x2="0" y2="-26" stroke="white" stroke-width="5" stroke-linecap="round"/>
+    <line x1="0" y1="2" x2="20" y2="-12" stroke="white" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="0" cy="0" r="5" fill="white"/>
+  </g>
+</svg>

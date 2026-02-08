@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="icon.svg" width="128" alt="Wartungsplaner Icon" />
+</p>
+
 # Wartungsplaner - HACS Integration für Home Assistant
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
