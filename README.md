@@ -1,17 +1,39 @@
 # Wartungsplaner - HACS Integration für Home Assistant
 
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![GitHub Release](https://img.shields.io/github/v/release/philippauer/ha-wartungsplaner)](https://github.com/philippauer/ha-wartungsplaner/releases)
+[![License: MIT](https://img.shields.io/github/license/philippauer/ha-wartungsplaner)](LICENSE)
+
 Eine umfassende HACS Custom Integration zur Planung und Verwaltung von Haushaltswartungsaufgaben in Home Assistant.
+
+![Wartungsplaner Overview](screenshots/overview.png)
 
 ## Features
 
 - **Aufgabenverwaltung**: Erstellen, bearbeiten, erledigen und löschen von Wartungsaufgaben
-- **Vordefinierte Vorlagen**: ~30 deutsche Aufgabenvorlagen für typische Haushaltswartung (Heizung, Sicherheit, Sanitär, Geräte, etc.)
+- **Vordefinierte Vorlagen**: ~30 deutsche Aufgabenvorlagen für typische Haushaltswartung
+- **Eigene Vorlagen**: Aufgaben als wiederverwendbare Vorlagen speichern
+- **Eigene Kategorien**: Benutzerdefinierte Kategorien mit Icon und mehrsprachigem Namen anlegen
 - **Sidebar-Panel**: Eigenes Dashboard mit Übersicht, Aufgabenliste und Vorlagen
 - **Sensoren**: Pro Aufgabe ein Sensor (Tage bis fällig) und Binary Sensor (fällig ja/nein)
 - **Kalender**: Integration in den Home Assistant Kalender mit Fälligkeitsterminen
 - **Events**: Automatische Events bei Statusübergängen (`wartungsplaner_task_due`, `wartungsplaner_task_overdue`)
 - **Services**: 5 Services für Automationen (complete, add, update, delete, snooze)
 - **Zweisprachig**: Vollständig in Deutsch und Englisch verfügbar
+
+## Screenshots
+
+| Übersicht | Aufgabenliste |
+|:-:|:-:|
+| ![Overview](screenshots/overview.png) | ![Tasks](screenshots/tasks.png) |
+
+| Aufgabe hinzufügen | Vorlagen |
+|:-:|:-:|
+| ![Add Task](screenshots/add-task.png) | ![Templates](screenshots/templates.png) |
+
+| Kategorien verwalten | Eigene Vorlagen |
+|:-:|:-:|
+| ![Manage Categories](screenshots/manage-categories.png) | ![Custom Templates](screenshots/custom-templates.png) |
 
 ## Installation
 
@@ -20,7 +42,7 @@ Eine umfassende HACS Custom Integration zur Planung und Verwaltung von Haushalts
 1. Öffne HACS in Home Assistant
 2. Klicke auf "Integrationen"
 3. Klicke auf die drei Punkte oben rechts und wähle "Benutzerdefinierte Repositories"
-4. Füge die Repository-URL hinzu und wähle "Integration" als Kategorie
+4. Füge `https://github.com/philippauer/ha-wartungsplaner` hinzu und wähle "Integration" als Kategorie
 5. Suche nach "Wartungsplaner" und installiere es
 6. Starte Home Assistant neu
 
@@ -45,8 +67,35 @@ Eine umfassende HACS Custom Integration zur Planung und Verwaltung von Haushalts
 Nach der Installation erscheint "Wartungsplaner" in der Seitenleiste mit drei Tabs:
 
 - **Übersicht**: Statistik-Karten und dringende Aufgaben
-- **Aufgaben**: Filterbarer Aufgabenliste mit Such- und Filterfunktion
-- **Vorlagen**: Vordefinierte Aufgaben zum schnellen Hinzufügen
+- **Aufgaben**: Filterbare Aufgabenliste mit Such- und Filterfunktion
+- **Vorlagen**: Vordefinierte und eigene Aufgabenvorlagen zum schnellen Hinzufügen
+
+![Sidebar Panel](screenshots/sidebar.png)
+
+### Aufgaben erstellen
+
+Beim Erstellen oder Bearbeiten einer Aufgabe stehen folgende Felder zur Verfügung:
+
+| Feld | Beschreibung |
+|------|-------------|
+| Name | Name der Wartungsaufgabe |
+| Beschreibung | Optionale Details zur Aufgabe |
+| Kategorie | Eingebaute oder eigene Kategorie |
+| Priorität | Niedrig, Mittel, Hoch, Kritisch |
+| Intervall | Wiederholungsintervall (Tage/Wochen/Monate/Jahre) |
+| Zuletzt erledigt | Datum der letzten Erledigung (leer = heute) |
+
+### Eigene Kategorien
+
+Über den Zahnrad-Button in der Toolbar lassen sich eigene Kategorien anlegen:
+
+- Deutscher und englischer Name
+- MDI-Icon (z.B. `mdi:pool`, `mdi:car`)
+- Kategorien mit zugewiesenen Aufgaben können nicht gelöscht werden
+
+### Eigene Vorlagen
+
+Jede Aufgabe kann über das Disketten-Icon als Vorlage gespeichert werden. Eigene Vorlagen erscheinen im Vorlagen-Tab und können dort wieder gelöscht werden.
 
 ### Sensoren
 
@@ -89,6 +138,7 @@ service: wartungsplaner.update_task
 data:
   task_id: "uuid-der-aufgabe"
   priority: "critical"
+  last_completed: "2026-01-15"
 ```
 
 ### `wartungsplaner.delete_task`
@@ -110,6 +160,8 @@ data:
 
 ## Kategorien
 
+### Eingebaute Kategorien
+
 | Kategorie | Schlüssel | Icon |
 |-----------|-----------|------|
 | Heizung | `heating` | mdi:radiator |
@@ -122,6 +174,8 @@ data:
 | Garten | `garden` | mdi:flower |
 | Reinigung | `cleaning` | mdi:broom |
 | Sonstiges | `other` | mdi:dots-horizontal |
+
+Eigene Kategorien können über das Panel hinzugefügt werden und unterstützen alle [MDI-Icons](https://pictogrammers.com/library/mdi/).
 
 ## Beispiel-Automationen
 
