@@ -13,8 +13,6 @@ from homeassistant.components.frontend import async_register_built_in_panel
 from homeassistant.components.http import StaticPathConfig
 
 from .const import (
-    CONF_DUE_SOON_DAYS,
-    DEFAULT_DUE_SOON_DAYS,
     DOMAIN,
     PLATFORMS,
 )
@@ -83,8 +81,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     store = WartungsplanerStore(hass)
     await store.async_load()
 
-    due_soon_days = entry.options.get(CONF_DUE_SOON_DAYS, DEFAULT_DUE_SOON_DAYS)
-    coordinator = WartungsplanerCoordinator(hass, store, due_soon_days)
+    coordinator = WartungsplanerCoordinator(hass, store)
 
     await coordinator.async_config_entry_first_refresh()
 
@@ -105,9 +102,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Forward entry setup to platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # Listen for option updates
-    entry.async_on_unload(entry.add_update_listener(_async_update_options))
-
     return True
 
 
@@ -119,17 +113,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data.pop(DOMAIN, None)
 
     return unload_ok
-
-
-async def _async_update_options(
-    hass: HomeAssistant, entry: ConfigEntry
-) -> None:
-    """Handle options update."""
-    coordinator: WartungsplanerCoordinator = hass.data[DOMAIN]["coordinator"]
-    coordinator.due_soon_days = entry.options.get(
-        CONF_DUE_SOON_DAYS, DEFAULT_DUE_SOON_DAYS
-    )
-    await coordinator.async_request_refresh()
 
 
 async def _async_register_panel(hass: HomeAssistant) -> None:

@@ -10,7 +10,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
-    CONF_DUE_SOON_DAYS,
     DEFAULT_DUE_SOON_DAYS,
     DOMAIN,
     EVENT_TASK_DUE,
@@ -30,7 +29,6 @@ class WartungsplanerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self,
         hass: HomeAssistant,
         store: WartungsplanerStore,
-        due_soon_days: int = DEFAULT_DUE_SOON_DAYS,
     ) -> None:
         """Initialize the coordinator."""
         super().__init__(
@@ -40,8 +38,12 @@ class WartungsplanerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             update_interval=timedelta(seconds=UPDATE_INTERVAL),
         )
         self.store = store
-        self.due_soon_days = due_soon_days
         self._previous_statuses: dict[str, str] = {}
+
+    @property
+    def due_soon_days(self) -> int:
+        """Return due_soon_days from store settings."""
+        return self.store.settings.get("due_soon_days", DEFAULT_DUE_SOON_DAYS)
 
     def _compute_task_status(self, task: dict[str, Any]) -> str:
         """Compute the current status of a task."""

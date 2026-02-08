@@ -38,6 +38,8 @@ def async_register_websocket_api(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_add_custom_template)
     websocket_api.async_register_command(hass, ws_delete_custom_template)
     websocket_api.async_register_command(hass, ws_restore_hidden_templates)
+    websocket_api.async_register_command(hass, ws_get_settings)
+    websocket_api.async_register_command(hass, ws_update_settings)
 
 
 def _get_coordinator(hass: HomeAssistant):
@@ -455,3 +457,46 @@ async def ws_restore_hidden_templates(
     store = _get_store(hass)
     await store.async_restore_hidden_templates()
     connection.send_result(msg["id"], {"success": True})
+
+
+# --- Settings ---
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "wartungsplaner/get_settings",
+    }
+)
+@callback
+def ws_get_settings(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Handle get settings WebSocket command."""
+    store = _get_store(hass)
+    connection.send_result(msg["id"], {"settings": store.settings})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "wartungsplaner/update_settings",
+        vol.Optional("due_soon_days"): vol.All(
+            vol.Coerce(int), vol.Range(min=1, max=90)
+        ),
+    }
+)
+@websocket_api.async_response
+async def ws_update_settings(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Handle update settings WebSocket command."""
+    store = _get_store(hass)
+    coordinator = _get_coordinator(hass)
+
+    data = {k: v for k, v in msg.items() if k not in ("id", "type")}
+    settings = await store.async_update_settings(data)
+    await coordinator.async_request_refresh()
+    connection.send_result(msg["id"], {"settings": settings})

@@ -13,7 +13,7 @@ from homeassistant.helpers.storage import Store
 
 from slugify import slugify
 
-from .const import DOMAIN, STORAGE_KEY, STORAGE_VERSION, IntervalUnit
+from .const import DEFAULT_DUE_SOON_DAYS, DOMAIN, STORAGE_KEY, STORAGE_VERSION, IntervalUnit
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -61,6 +61,7 @@ class WartungsplanerStore:
         self._custom_templates: dict[str, dict[str, Any]] = {}
         self._custom_categories: dict[str, dict[str, Any]] = {}
         self._hidden_templates: set[str] = set()
+        self._settings: dict[str, Any] = {"due_soon_days": DEFAULT_DUE_SOON_DAYS}
 
     @property
     def tasks(self) -> dict[str, dict[str, Any]]:
@@ -82,6 +83,11 @@ class WartungsplanerStore:
         """Return IDs of hidden builtin templates."""
         return self._hidden_templates
 
+    @property
+    def settings(self) -> dict[str, Any]:
+        """Return settings."""
+        return self._settings
+
     async def async_load(self) -> None:
         """Load data from storage."""
         data = await self._store.async_load()
@@ -92,6 +98,7 @@ class WartungsplanerStore:
         self._custom_templates = (data or {}).get("custom_templates", {})
         self._custom_categories = (data or {}).get("custom_categories", {})
         self._hidden_templates = set((data or {}).get("hidden_templates", []))
+        self._settings = (data or {}).get("settings", {"due_soon_days": DEFAULT_DUE_SOON_DAYS})
         _LOGGER.debug("Loaded %d tasks from storage", len(self._tasks))
 
     async def async_save(self) -> None:
@@ -101,6 +108,7 @@ class WartungsplanerStore:
             "custom_templates": self._custom_templates,
             "custom_categories": self._custom_categories,
             "hidden_templates": list(self._hidden_templates),
+            "settings": self._settings,
         })
 
     async def async_add_task(self, task_data: dict[str, Any]) -> dict[str, Any]:
@@ -287,6 +295,13 @@ class WartungsplanerStore:
         await self.async_save()
         _LOGGER.debug("Added custom category: %s (%s)", category["name_de"], cat_id)
         return category
+
+    async def async_update_settings(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Update settings."""
+        self._settings.update(data)
+        await self.async_save()
+        _LOGGER.debug("Updated settings: %s", data)
+        return self._settings
 
     async def async_hide_builtin_template(self, template_id: str) -> None:
         """Hide a builtin template."""

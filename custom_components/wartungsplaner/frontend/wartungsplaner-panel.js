@@ -47,6 +47,8 @@ const STRINGS = {
     confirmDelete: "Möchten Sie diese Aufgabe wirklich löschen?",
     completionNotes: "Erledigungs-Notizen (optional)",
     never: "Nie",
+    settings: "Einstellungen",
+    dueSoonDays: "Tage vor Fälligkeit als 'Bald fällig'",
     manageCategories: "Kategorien verwalten",
     addCategory: "Kategorie hinzufügen",
     deleteCategory: "Kategorie löschen",
@@ -118,6 +120,8 @@ const STRINGS = {
     confirmDelete: "Are you sure you want to delete this task?",
     completionNotes: "Completion notes (optional)",
     never: "Never",
+    settings: "Settings",
+    dueSoonDays: "Days before due to mark as 'due soon'",
     manageCategories: "Manage Categories",
     addCategory: "Add Category",
     deleteCategory: "Delete Category",
@@ -177,6 +181,7 @@ class WartungsplanerPanel extends HTMLElement {
     this._filterStatus = "all";
     this._searchQuery = "";
     this._hiddenTemplateCount = 0;
+    this._settings = { due_soon_days: 7 };
     this._lang = "de";
   }
 
@@ -187,7 +192,7 @@ class WartungsplanerPanel extends HTMLElement {
     }
     if (!this._initialized) {
       this._initialized = true;
-      this._loadCategories().then(() => this._loadData());
+      Promise.all([this._loadCategories(), this._loadSettings()]).then(() => this._loadData());
     }
   }
 
@@ -221,6 +226,16 @@ class WartungsplanerPanel extends HTMLElement {
       this._categories = result.categories || [];
     } catch (e) {
       console.error("Wartungsplaner: Failed to load categories", e);
+    }
+  }
+
+  async _loadSettings() {
+    if (!this._hass) return;
+    try {
+      const result = await this._hass.callWS({ type: "wartungsplaner/get_settings" });
+      this._settings = result.settings || { due_soon_days: 7 };
+    } catch (e) {
+      console.error("Wartungsplaner: Failed to load settings", e);
     }
   }
 
@@ -389,7 +404,7 @@ class WartungsplanerPanel extends HTMLElement {
             <input type="text" class="search-input" id="searchInput" placeholder="${t.search}" value="${this._searchQuery}" />
           </div>
           <div class="toolbar-buttons">
-            <button class="btn btn-icon" id="manageCategoriesBtn" title="${t.manageCategories}">
+            <button class="btn btn-icon" id="manageCategoriesBtn" title="${t.settings}">
               <ha-icon icon="mdi:cog"></ha-icon>
             </button>
             <button class="btn btn-primary" id="addTaskBtn">
@@ -881,7 +896,13 @@ class WartungsplanerPanel extends HTMLElement {
     dialog.innerHTML = `
       <div class="dialog-overlay">
         <div class="dialog">
-          <h2>${t.manageCategories}</h2>
+          <h2>${t.settings}</h2>
+          <div class="form-group">
+            <label>${t.dueSoonDays}</label>
+            <input type="number" id="settingDueSoonDays" min="1" max="90" value="${this._settings.due_soon_days || 7}" />
+          </div>
+          <hr />
+          <h3>${t.manageCategories}</h3>
           <div class="category-list"></div>
           <hr />
           <h3>${t.addCategory}</h3>
@@ -913,15 +934,27 @@ class WartungsplanerPanel extends HTMLElement {
     this.shadowRoot.appendChild(dialog);
     renderList();
 
-    dialog.querySelector("#dialogClose").addEventListener("click", () => {
+    const saveSettingsAndClose = async () => {
+      const dueSoonDays = parseInt(dialog.querySelector("#settingDueSoonDays").value, 10);
+      if (dueSoonDays >= 1 && dueSoonDays <= 90 && dueSoonDays !== this._settings.due_soon_days) {
+        try {
+          await this._hass.callWS({
+            type: "wartungsplaner/update_settings",
+            due_soon_days: dueSoonDays,
+          });
+          this._settings.due_soon_days = dueSoonDays;
+          await this._loadData();
+        } catch (e) {
+          console.error("Wartungsplaner: Failed to save settings", e);
+        }
+      }
       dialog.remove();
       this._render();
-    });
+    };
+
+    dialog.querySelector("#dialogClose").addEventListener("click", saveSettingsAndClose);
     dialog.querySelector(".dialog-overlay").addEventListener("click", (e) => {
-      if (e.target.classList.contains("dialog-overlay")) {
-        dialog.remove();
-        this._render();
-      }
+      if (e.target.classList.contains("dialog-overlay")) saveSettingsAndClose();
     });
 
     dialog.querySelector("#newCatIcon").addEventListener("input", (e) => {

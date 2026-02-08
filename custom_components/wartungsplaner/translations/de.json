@@ -5,7 +5,6 @@
         "title": "Wartungsplaner Einrichtung",
         "description": "Konfigurieren Sie den Wartungsplaner für die Hauswartungsplanung.",
         "data": {
-          "due_soon_days": "Tage vor Fälligkeit als 'Bald fällig' markieren",
           "enable_notifications": "Statusänderungs-Events aktivieren"
         }
       }
@@ -19,7 +18,6 @@
       "init": {
         "title": "Wartungsplaner Optionen",
         "data": {
-          "due_soon_days": "Tage vor Fälligkeit als 'Bald fällig' markieren",
           "enable_notifications": "Statusänderungs-Events aktivieren"
         }
       }

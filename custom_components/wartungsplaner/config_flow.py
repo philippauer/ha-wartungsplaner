@@ -10,9 +10,7 @@ from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 
 from .const import (
-    CONF_DUE_SOON_DAYS,
     CONF_ENABLE_NOTIFICATIONS,
-    DEFAULT_DUE_SOON_DAYS,
     DEFAULT_ENABLE_NOTIFICATIONS,
     DOMAIN,
 )
@@ -36,9 +34,6 @@ class WartungsplanerConfigFlow(ConfigFlow, domain=DOMAIN):
                 title="Wartungsplaner",
                 data={},
                 options={
-                    CONF_DUE_SOON_DAYS: user_input.get(
-                        CONF_DUE_SOON_DAYS, DEFAULT_DUE_SOON_DAYS
-                    ),
                     CONF_ENABLE_NOTIFICATIONS: user_input.get(
                         CONF_ENABLE_NOTIFICATIONS, DEFAULT_ENABLE_NOTIFICATIONS
                     ),
@@ -49,9 +44,6 @@ class WartungsplanerConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required(
-                        CONF_DUE_SOON_DAYS, default=DEFAULT_DUE_SOON_DAYS
-                    ): vol.All(vol.Coerce(int), vol.Range(min=1, max=90)),
                     vol.Required(
                         CONF_ENABLE_NOTIFICATIONS,
                         default=DEFAULT_ENABLE_NOTIFICATIONS,
@@ -85,12 +77,6 @@ class WartungsplanerOptionsFlow(OptionsFlow):
             step_id="init",
             data_schema=vol.Schema(
                 {
-                    vol.Required(
-                        CONF_DUE_SOON_DAYS,
-                        default=self.config_entry.options.get(
-                            CONF_DUE_SOON_DAYS, DEFAULT_DUE_SOON_DAYS
-                        ),
-                    ): vol.All(vol.Coerce(int), vol.Range(min=1, max=90)),
                     vol.Required(
                         CONF_ENABLE_NOTIFICATIONS,
                         default=self.config_entry.options.get(
