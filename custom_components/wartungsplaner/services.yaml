@@ -33,32 +33,11 @@ add_task:
         text:
     category:
       name: Category
-      description: Task category.
+      description: "Task category (builtin: heating, safety, plumbing, appliances, exterior, interior, electrical, garden, cleaning, other; or custom category ID)."
       required: false
       default: other
       selector:
-        select:
-          options:
-            - label: Heizung
-              value: heating
-            - label: Sicherheit
-              value: safety
-            - label: Sanitär
-              value: plumbing
-            - label: Geräte
-              value: appliances
-            - label: Außen
-              value: exterior
-            - label: Innen
-              value: interior
-            - label: Elektrik
-              value: electrical
-            - label: Garten
-              value: garden
-            - label: Reinigung
-              value: cleaning
-            - label: Sonstiges
-              value: other
+        text:
     priority:
       name: Priority
       description: Task priority.
@@ -126,31 +105,10 @@ update_task:
         text:
     category:
       name: Category
-      description: New category for the task.
+      description: "New category for the task (builtin or custom category ID)."
       required: false
       selector:
-        select:
-          options:
-            - label: Heizung
-              value: heating
-            - label: Sicherheit
-              value: safety
-            - label: Sanitär
-              value: plumbing
-            - label: Geräte
-              value: appliances
-            - label: Außen
-              value: exterior
-            - label: Innen
-              value: interior
-            - label: Elektrik
-              value: electrical
-            - label: Garten
-              value: garden
-            - label: Reinigung
-              value: cleaning
-            - label: Sonstiges
-              value: other
+        text:
     priority:
       name: Priority
       description: New priority for the task.

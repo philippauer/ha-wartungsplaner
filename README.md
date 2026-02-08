@@ -15,11 +15,11 @@ Eine umfassende HACS Custom Integration zur Planung und Verwaltung von Haushalts
 ## Features
 
 - **Aufgabenverwaltung**: Erstellen, bearbeiten, erledigen und löschen von Wartungsaufgaben
-- **Vordefinierte Vorlagen**: ~30 deutsche Aufgabenvorlagen für typische Haushaltswartung
-- **Eigene Vorlagen**: Aufgaben als wiederverwendbare Vorlagen speichern
-- **Eigene Kategorien**: Benutzerdefinierte Kategorien mit Icon und mehrsprachigem Namen anlegen
+- **44 vordefinierte Vorlagen**: Deutsche Aufgabenvorlagen für Heizung, Sicherheit, Sanitär, Geräte, Außen (inkl. Pool), Innen, Elektrik (inkl. Photovoltaik), Garten, Reinigung
+- **Eigene Vorlagen**: Aufgaben als wiederverwendbare Vorlagen speichern, System-Vorlagen ausblenden und wiederherstellen
+- **Eigene Kategorien**: Benutzerdefinierte Kategorien mit Live-Icon-Vorschau und mehrsprachigem Namen
 - **Sidebar-Panel**: Eigenes Dashboard mit Übersicht, Aufgabenliste und Vorlagen
-- **Sensoren**: Pro Aufgabe ein Sensor (Tage bis fällig) und Binary Sensor (fällig ja/nein)
+- **Sensoren**: Pro Aufgabe ein Sensor (Tage bis fällig) und Binary Sensor (fällig ja/nein) - werden automatisch aufgeräumt
 - **Kalender**: Integration in den Home Assistant Kalender mit Fälligkeitsterminen
 - **Events**: Automatische Events bei Statusübergängen (`wartungsplaner_task_due`, `wartungsplaner_task_overdue`)
 - **Services**: 5 Services für Automationen (complete, add, update, delete, snooze)
@@ -94,12 +94,25 @@ Beim Erstellen oder Bearbeiten einer Aufgabe stehen folgende Felder zur Verfügu
 Über den Zahnrad-Button in der Toolbar lassen sich eigene Kategorien anlegen:
 
 - Deutscher und englischer Name
-- MDI-Icon (z.B. `mdi:pool`, `mdi:car`)
+- MDI-Icon mit Live-Vorschau (z.B. `mdi:pool`, `mdi:car`)
 - Kategorien mit zugewiesenen Aufgaben können nicht gelöscht werden
+
+### Vorlagen
+
+Im Vorlagen-Tab stehen 44 vordefinierte Aufgabenvorlagen zur Verfügung, darunter:
+
+- **Pool**: Wasserqualität testen, Filter reinigen, Winterfest machen
+- **Heizung**: Wartung, Schornsteinfeger, Heizkörper entlüften
+- **Außen**: Dach kontrollieren, Garagentor warten, Terrasse reinigen
+- **Elektrik**: Photovoltaikanlage, FI-Schutzschalter, Blitzschutz
+- **Sanitär**: Wasserenthärter, Warmwasserspeicher, Abflüsse
+- **Garten**: Rasen düngen, Obstbäume schneiden, Hecke schneiden
+
+Nicht benötigte Vorlagen können ausgeblendet und jederzeit wiederhergestellt werden.
 
 ### Eigene Vorlagen
 
-Jede Aufgabe kann über das Disketten-Icon als Vorlage gespeichert werden. Eigene Vorlagen erscheinen im Vorlagen-Tab und können dort wieder gelöscht werden.
+Jede Aufgabe kann über das Disketten-Icon als Vorlage gespeichert werden (mit Erfolgsmeldung). Eigene Vorlagen erscheinen im Vorlagen-Tab und können dort wieder gelöscht werden.
 
 ### Sensoren
 
