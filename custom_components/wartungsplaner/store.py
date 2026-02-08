@@ -11,7 +11,7 @@ from dateutil.relativedelta import relativedelta
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
-from homeassistant.util.slugify import slugify
+from slugify import slugify
 
 from .const import DOMAIN, STORAGE_KEY, STORAGE_VERSION, IntervalUnit
 
