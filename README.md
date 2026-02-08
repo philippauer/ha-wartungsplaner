@@ -6,7 +6,7 @@
 
 Eine umfassende HACS Custom Integration zur Planung und Verwaltung von Haushaltswartungsaufgaben in Home Assistant.
 
-![Wartungsplaner Overview](screenshots/overview.png)
+![Wartungsplaner Overview](screenshots/overview.svg)
 
 ## Features
 
@@ -25,15 +25,15 @@ Eine umfassende HACS Custom Integration zur Planung und Verwaltung von Haushalts
 
 | Übersicht | Aufgabenliste |
 |:-:|:-:|
-| ![Overview](screenshots/overview.png) | ![Tasks](screenshots/tasks.png) |
+| ![Overview](screenshots/overview.svg) | ![Tasks](screenshots/tasks.svg) |
 
 | Aufgabe hinzufügen | Vorlagen |
 |:-:|:-:|
-| ![Add Task](screenshots/add-task.png) | ![Templates](screenshots/templates.png) |
+| ![Add Task](screenshots/add-task.svg) | ![Templates](screenshots/templates.svg) |
 
 | Kategorien verwalten | Eigene Vorlagen |
 |:-:|:-:|
-| ![Manage Categories](screenshots/manage-categories.png) | ![Custom Templates](screenshots/custom-templates.png) |
+| ![Manage Categories](screenshots/manage-categories.svg) | ![Custom Templates](screenshots/custom-templates.svg) |
 
 ## Installation
 
@@ -70,7 +70,7 @@ Nach der Installation erscheint "Wartungsplaner" in der Seitenleiste mit drei Ta
 - **Aufgaben**: Filterbare Aufgabenliste mit Such- und Filterfunktion
 - **Vorlagen**: Vordefinierte und eigene Aufgabenvorlagen zum schnellen Hinzufügen
 
-![Sidebar Panel](screenshots/sidebar.png)
+![Sidebar Panel](screenshots/sidebar.svg)
 
 ### Aufgaben erstellen
 

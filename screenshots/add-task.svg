@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="540" viewBox="0 0 520 540">
+  <defs>
+    <filter id="shadow" x="-4%" y="-2%" width="108%" height="106%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+  <!-- Overlay -->
+  <rect width="520" height="540" rx="12" fill="rgba(0,0,0,0.4)"/>
+  <!-- Dialog -->
+  <rect x="20" y="16" width="480" height="508" rx="12" fill="#ffffff" filter="url(#shadow)"/>
+
+  <text x="44" y="52" font-family="Roboto,sans-serif" font-size="18" fill="#212121" font-weight="500">Aufgabe hinzufügen</text>
+
+  <!-- Name field -->
+  <text x="44" y="82" font-family="Roboto,sans-serif" font-size="12" fill="#727272" font-weight="500">Name</text>
+  <rect x="44" y="90" width="432" height="32" rx="4" fill="#fafafa"/>
+  <rect x="44" y="120" width="432" height="2" fill="#e0e0e0"/>
+  <text x="56" y="112" font-family="Roboto,sans-serif" font-size="13" fill="#212121">Poolfilter reinigen</text>
+
+  <!-- Description field -->
+  <text x="44" y="148" font-family="Roboto,sans-serif" font-size="12" fill="#727272" font-weight="500">Beschreibung</text>
+  <rect x="44" y="156" width="432" height="56" rx="4" fill="#fafafa"/>
+  <rect x="44" y="210" width="432" height="2" fill="#e0e0e0"/>
+  <text x="56" y="178" font-family="Roboto,sans-serif" font-size="13" fill="#212121">Poolfilter rückspülen und bei</text>
+  <text x="56" y="196" font-family="Roboto,sans-serif" font-size="13" fill="#212121">Bedarf Filtermedium wechseln</text>
+
+  <!-- Category + Priority row -->
+  <text x="44" y="238" font-family="Roboto,sans-serif" font-size="12" fill="#727272" font-weight="500">Kategorie</text>
+  <rect x="44" y="246" width="208" height="32" rx="4" fill="#fafafa"/>
+  <rect x="44" y="276" width="208" height="2" fill="#03a9f4"/>
+  <text x="56" y="268" font-family="Roboto,sans-serif" font-size="13" fill="#212121">Reinigung</text>
+  <text x="234" y="268" font-family="Roboto,sans-serif" font-size="10" fill="#727272">&#x25BC;</text>
+
+  <text x="268" y="238" font-family="Roboto,sans-serif" font-size="12" fill="#727272" font-weight="500">Priorität</text>
+  <rect x="268" y="246" width="208" height="32" rx="4" fill="#fafafa"/>
+  <rect x="268" y="276" width="208" height="2" fill="#e0e0e0"/>
+  <text x="280" y="268" font-family="Roboto,sans-serif" font-size="13" fill="#212121">Mittel</text>
+  <text x="458" y="268" font-family="Roboto,sans-serif" font-size="10" fill="#727272">&#x25BC;</text>
+
+  <!-- Interval row -->
+  <text x="44" y="306" font-family="Roboto,sans-serif" font-size="12" fill="#727272" font-weight="500">Intervall</text>
+  <rect x="44" y="314" width="208" height="32" rx="4" fill="#fafafa"/>
+  <rect x="44" y="344" width="208" height="2" fill="#e0e0e0"/>
+  <text x="56" y="336" font-family="Roboto,sans-serif" font-size="13" fill="#212121">2</text>
+
+  <text x="268" y="306" font-family="Roboto,sans-serif" font-size="12" fill="#727272" font-weight="500">Einheit</text>
+  <rect x="268" y="314" width="208" height="32" rx="4" fill="#fafafa"/>
+  <rect x="268" y="344" width="208" height="2" fill="#e0e0e0"/>
+  <text x="280" y="336" font-family="Roboto,sans-serif" font-size="13" fill="#212121">Wochen</text>
+  <text x="458" y="336" font-family="Roboto,sans-serif" font-size="10" fill="#727272">&#x25BC;</text>
+
+  <!-- Last completed field -->
+  <text x="44" y="374" font-family="Roboto,sans-serif" font-size="12" fill="#727272" font-weight="500">Zuletzt erledigt <tspan font-weight="400" font-size="11" opacity="0.7">(Leer = Heute)</tspan></text>
+  <rect x="44" y="382" width="432" height="32" rx="4" fill="#fafafa"/>
+  <rect x="44" y="412" width="432" height="2" fill="#e0e0e0"/>
+  <text x="56" y="404" font-family="Roboto,sans-serif" font-size="13" fill="#9e9e9e">tt.mm.jjjj</text>
+
+  <!-- Buttons -->
+  <rect x="308" y="438" width="80" height="36" rx="8" fill="#ffffff" stroke="#e0e0e0"/>
+  <text x="348" y="461" font-family="Roboto,sans-serif" font-size="13" fill="#212121" text-anchor="middle">Abbrechen</text>
+
+  <rect x="396" y="438" width="80" height="36" rx="8" fill="#03a9f4"/>
+  <text x="436" y="461" font-family="Roboto,sans-serif" font-size="13" fill="white" text-anchor="middle" font-weight="500">Speichern</text>
+</svg>

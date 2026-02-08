@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="520" viewBox="0 0 520 520">
+  <defs>
+    <filter id="shadow" x="-4%" y="-2%" width="108%" height="106%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+  <!-- Overlay -->
+  <rect width="520" height="520" rx="12" fill="rgba(0,0,0,0.4)"/>
+  <!-- Dialog -->
+  <rect x="20" y="16" width="480" height="488" rx="12" fill="#ffffff" filter="url(#shadow)"/>
+
+  <text x="44" y="52" font-family="Roboto,sans-serif" font-size="18" fill="#212121" font-weight="500">Kategorien verwalten</text>
+
+  <!-- Category list -->
+  <rect x="44" y="68" width="432" height="36" rx="8" fill="#fafafa"/>
+  <text x="68" y="91" font-family="Roboto,sans-serif" font-size="13" fill="#212121">&#x2668;  Heizung</text>
+  <rect x="390" y="76" width="74" height="20" rx="10" fill="#e0e0e0"/>
+  <text x="427" y="90" font-family="Roboto,sans-serif" font-size="9" fill="#727272" text-anchor="middle">Standard</text>
+
+  <rect x="44" y="110" width="432" height="36" rx="8" fill="#fafafa"/>
+  <text x="68" y="133" font-family="Roboto,sans-serif" font-size="13" fill="#212121">&#x1F6E1;  Sicherheit</text>
+  <rect x="390" y="118" width="74" height="20" rx="10" fill="#e0e0e0"/>
+  <text x="427" y="132" font-family="Roboto,sans-serif" font-size="9" fill="#727272" text-anchor="middle">Standard</text>
+
+  <rect x="44" y="152" width="432" height="36" rx="8" fill="#fafafa"/>
+  <text x="68" y="175" font-family="Roboto,sans-serif" font-size="13" fill="#212121">&#x1F6BF;  Sanitär</text>
+  <rect x="390" y="160" width="74" height="20" rx="10" fill="#e0e0e0"/>
+  <text x="427" y="174" font-family="Roboto,sans-serif" font-size="9" fill="#727272" text-anchor="middle">Standard</text>
+
+  <rect x="44" y="194" width="432" height="36" rx="8" fill="#fafafa"/>
+  <text x="68" y="217" font-family="Roboto,sans-serif" font-size="13" fill="#212121">&#x26A1;  Elektrik</text>
+  <rect x="390" y="202" width="74" height="20" rx="10" fill="#e0e0e0"/>
+  <text x="427" y="216" font-family="Roboto,sans-serif" font-size="9" fill="#727272" text-anchor="middle">Standard</text>
+
+  <!-- Custom category -->
+  <rect x="44" y="236" width="432" height="36" rx="8" fill="#fafafa"/>
+  <text x="68" y="259" font-family="Roboto,sans-serif" font-size="13" fill="#212121">&#x1F3CA;  Pool</text>
+  <rect x="430" y="244" width="34" height="22" rx="6" fill="#f44336"/>
+  <text x="447" y="259" font-family="Roboto,sans-serif" font-size="10" fill="white" text-anchor="middle">&#x1F5D1;</text>
+
+  <rect x="44" y="278" width="432" height="36" rx="8" fill="#fafafa"/>
+  <text x="68" y="301" font-family="Roboto,sans-serif" font-size="13" fill="#212121">&#x1F697;  Fahrzeug</text>
+  <rect x="430" y="286" width="34" height="22" rx="6" fill="#f44336"/>
+  <text x="447" y="301" font-family="Roboto,sans-serif" font-size="10" fill="white" text-anchor="middle">&#x1F5D1;</text>
+
+  <!-- Divider -->
+  <rect x="44" y="326" width="432" height="1" fill="#e0e0e0"/>
+
+  <!-- Add category form -->
+  <text x="44" y="352" font-family="Roboto,sans-serif" font-size="15" fill="#212121" font-weight="500">Kategorie hinzufügen</text>
+
+  <text x="44" y="378" font-family="Roboto,sans-serif" font-size="12" fill="#727272" font-weight="500">Name (Deutsch)</text>
+  <rect x="44" y="386" width="432" height="28" rx="4" fill="#fafafa"/>
+  <rect x="44" y="412" width="432" height="2" fill="#e0e0e0"/>
+
+  <text x="44" y="434" font-family="Roboto,sans-serif" font-size="12" fill="#727272" font-weight="500">Name (Englisch)</text>
+  <rect x="44" y="442" width="208" height="28" rx="4" fill="#fafafa"/>
+  <rect x="44" y="468" width="208" height="2" fill="#e0e0e0"/>
+
+  <text x="268" y="434" font-family="Roboto,sans-serif" font-size="12" fill="#727272" font-weight="500">Icon (mdi:...)</text>
+  <rect x="268" y="442" width="208" height="28" rx="4" fill="#fafafa"/>
+  <rect x="268" y="468" width="208" height="2" fill="#e0e0e0"/>
+  <text x="280" y="462" font-family="Roboto,sans-serif" font-size="12" fill="#9e9e9e">mdi:dots-horizontal</text>
+
+  <!-- Buttons -->
+  <rect x="318" y="480" width="72" height="32" rx="8" fill="#ffffff" stroke="#e0e0e0"/>
+  <text x="354" y="500" font-family="Roboto,sans-serif" font-size="12" fill="#212121" text-anchor="middle">Schließen</text>
+
+  <rect x="398" y="480" width="78" height="32" rx="8" fill="#03a9f4"/>
+  <text x="437" y="500" font-family="Roboto,sans-serif" font-size="12" fill="white" text-anchor="middle" font-weight="500">+ Hinzufügen</text>
+</svg>

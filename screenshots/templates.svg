@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="460" viewBox="0 0 800 460">
+  <defs>
+    <filter id="shadow" x="-2%" y="-2%" width="104%" height="108%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.1"/>
+    </filter>
+  </defs>
+  <rect width="800" height="460" rx="12" fill="#fafafa"/>
+  <!-- Header -->
+  <text x="40" y="42" font-family="Roboto,sans-serif" font-size="22" fill="#212121" font-weight="400">
+    <tspan fill="#03a9f4">&#x1F527;</tspan> Wartungsplaner
+  </text>
+  <!-- Tabs -->
+  <rect x="40" y="58" width="720" height="1" fill="#e0e0e0"/>
+  <text x="52" y="80" font-family="Roboto,sans-serif" font-size="13" fill="#727272">Übersicht</text>
+  <text x="145" y="80" font-family="Roboto,sans-serif" font-size="13" fill="#727272">Aufgaben</text>
+  <text x="235" y="80" font-family="Roboto,sans-serif" font-size="13" fill="#03a9f4" font-weight="500">Vorlagen</text>
+  <rect x="223" y="86" width="65" height="3" rx="1" fill="#03a9f4"/>
+
+  <text x="40" y="114" font-family="Roboto,sans-serif" font-size="13" fill="#727272">Aus Vorlage hinzufügen</text>
+
+  <!-- Category: Sicherheit -->
+  <text x="40" y="148" font-family="Roboto,sans-serif" font-size="15" fill="#212121" font-weight="500">
+    <tspan fill="#03a9f4">&#x1F6E1;</tspan> Sicherheit
+  </text>
+
+  <!-- Template 1 -->
+  <rect x="40" y="162" width="720" height="64" rx="12" fill="#ffffff" filter="url(#shadow)"/>
+  <text x="56" y="186" font-family="Roboto,sans-serif" font-size="13" fill="#212121" font-weight="500">Rauchmelder testen</text>
+  <text x="56" y="204" font-family="Roboto,sans-serif" font-size="11" fill="#727272">Alle Rauchmelder auf Funktion testen und Batterien prüfen</text>
+  <rect x="56" y="210" width="42" height="16" rx="8" fill="#f44336"/>
+  <text x="77" y="222" font-family="Roboto,sans-serif" font-size="9" fill="white" text-anchor="middle" font-weight="500">Kritisch</text>
+  <text x="108" y="222" font-family="Roboto,sans-serif" font-size="11" fill="#727272">3 Monate</text>
+  <rect x="718" y="178" width="30" height="26" rx="6" fill="#03a9f4"/>
+  <text x="733" y="196" font-family="Roboto,sans-serif" font-size="16" fill="white" text-anchor="middle">+</text>
+
+  <!-- Template 2 -->
+  <rect x="40" y="236" width="720" height="64" rx="12" fill="#ffffff" filter="url(#shadow)"/>
+  <text x="56" y="260" font-family="Roboto,sans-serif" font-size="13" fill="#212121" font-weight="500">Feuerlöscher prüfen</text>
+  <text x="56" y="278" font-family="Roboto,sans-serif" font-size="11" fill="#727272">Feuerlöscher auf Druck, Verfallsdatum und Zugänglichkeit prüfen</text>
+  <rect x="56" y="284" width="32" height="16" rx="8" fill="#ff9800"/>
+  <text x="72" y="296" font-family="Roboto,sans-serif" font-size="9" fill="white" text-anchor="middle" font-weight="500">Hoch</text>
+  <text x="98" y="296" font-family="Roboto,sans-serif" font-size="11" fill="#727272">2 Jahre</text>
+  <rect x="718" y="252" width="30" height="26" rx="6" fill="#03a9f4"/>
+  <text x="733" y="270" font-family="Roboto,sans-serif" font-size="16" fill="white" text-anchor="middle">+</text>
+
+  <!-- Category: Geräte (with custom template) -->
+  <text x="40" y="330" font-family="Roboto,sans-serif" font-size="15" fill="#212121" font-weight="500">
+    <tspan fill="#03a9f4">&#x1F9F9;</tspan> Reinigung
+  </text>
+
+  <!-- Custom template -->
+  <rect x="40" y="344" width="720" height="64" rx="12" fill="#ffffff" filter="url(#shadow)"/>
+  <text x="56" y="368" font-family="Roboto,sans-serif" font-size="13" fill="#212121" font-weight="500">Poolfilter reinigen</text>
+  <rect x="186" y="358" width="82" height="16" rx="8" fill="#03a9f4"/>
+  <text x="227" y="370" font-family="Roboto,sans-serif" font-size="9" fill="white" text-anchor="middle" font-weight="500">Eigene Vorlage</text>
+  <text x="56" y="392" font-family="Roboto,sans-serif" font-size="11" fill="#727272">Poolfilter rückspülen und Filtermedium prüfen</text>
+  <rect x="56" y="396" width="34" height="16" rx="8" fill="#2196f3"/>
+  <text x="73" y="408" font-family="Roboto,sans-serif" font-size="9" fill="white" text-anchor="middle" font-weight="500">Mittel</text>
+  <text x="100" y="408" font-family="Roboto,sans-serif" font-size="11" fill="#727272">2 Wochen</text>
+  <!-- Delete + Add buttons -->
+  <rect x="682" y="362" width="28" height="24" rx="6" fill="#f44336"/>
+  <text x="696" y="379" font-family="Roboto,sans-serif" font-size="11" fill="white" text-anchor="middle">&#x1F5D1;</text>
+  <rect x="718" y="362" width="30" height="24" rx="6" fill="#03a9f4"/>
+  <text x="733" y="379" font-family="Roboto,sans-serif" font-size="16" fill="white" text-anchor="middle">+</text>
+
+  <!-- Built-in template -->
+  <rect x="40" y="418" width="720" height="34" rx="12" fill="#ffffff" filter="url(#shadow)"/>
+  <text x="56" y="440" font-family="Roboto,sans-serif" font-size="13" fill="#212121" font-weight="500">Fenster putzen</text>
+  <text x="56" y="450" font-family="Roboto,sans-serif" font-size="11" fill="#727272">Alle Fenster gründlich reinigen</text>
+  <rect x="718" y="428" width="30" height="24" rx="6" fill="#03a9f4"/>
+  <text x="733" y="445" font-family="Roboto,sans-serif" font-size="16" fill="white" text-anchor="middle">+</text>
+</svg>
