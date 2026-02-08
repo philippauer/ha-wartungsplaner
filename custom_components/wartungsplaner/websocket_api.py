@@ -9,7 +9,14 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
-from .const import DOMAIN, IntervalUnit, TaskCategory, TaskPriority
+from .const import (
+    CATEGORY_ICONS,
+    CATEGORY_LABELS,
+    DOMAIN,
+    IntervalUnit,
+    TaskCategory,
+    TaskPriority,
+)
 from .templates import get_template_by_id, get_templates
 
 _LOGGER = logging.getLogger(__name__)
@@ -25,6 +32,11 @@ def async_register_websocket_api(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_get_templates)
     websocket_api.async_register_command(hass, ws_add_from_template)
     websocket_api.async_register_command(hass, ws_snooze_task)
+    websocket_api.async_register_command(hass, ws_get_categories)
+    websocket_api.async_register_command(hass, ws_add_category)
+    websocket_api.async_register_command(hass, ws_delete_category)
+    websocket_api.async_register_command(hass, ws_add_custom_template)
+    websocket_api.async_register_command(hass, ws_delete_custom_template)
 
 
 def _get_coordinator(hass: HomeAssistant):
@@ -59,9 +71,7 @@ def ws_get_tasks(
         vol.Required("type"): "wartungsplaner/add_task",
         vol.Required("name"): str,
         vol.Optional("description", default=""): str,
-        vol.Optional("category", default="other"): vol.In(
-            [e.value for e in TaskCategory]
-        ),
+        vol.Optional("category", default="other"): str,
         vol.Optional("priority", default="medium"): vol.In(
             [e.value for e in TaskPriority]
         ),
@@ -105,7 +115,7 @@ async def ws_add_task(
         vol.Required("task_id"): str,
         vol.Optional("name"): str,
         vol.Optional("description"): str,
-        vol.Optional("category"): vol.In([e.value for e in TaskCategory]),
+        vol.Optional("category"): str,
         vol.Optional("priority"): vol.In([e.value for e in TaskPriority]),
         vol.Optional("interval_value"): vol.All(
             vol.Coerce(int), vol.Range(min=1)
@@ -113,6 +123,7 @@ async def ws_add_task(
         vol.Optional("interval_unit"): vol.In(
             [e.value for e in IntervalUnit]
         ),
+        vol.Optional("last_completed"): str,
     }
 )
 @websocket_api.async_response
@@ -204,8 +215,10 @@ def ws_get_templates(
     msg: dict[str, Any],
 ) -> None:
     """Handle get templates WebSocket command."""
-    templates = get_templates()
-    connection.send_result(msg["id"], {"templates": templates})
+    store = _get_store(hass)
+    builtin = get_templates()
+    custom = list(store.custom_templates.values())
+    connection.send_result(msg["id"], {"templates": builtin + custom})
 
 
 @websocket_api.websocket_command(
@@ -225,6 +238,9 @@ async def ws_add_from_template(
     coordinator = _get_coordinator(hass)
 
     template = get_template_by_id(msg["template_id"])
+    if template is None:
+        # Check custom templates
+        template = store.custom_templates.get(msg["template_id"])
     if template is None:
         connection.send_error(msg["id"], "not_found", "Template not found")
         return
@@ -267,3 +283,143 @@ async def ws_snooze_task(
 
     await coordinator.async_request_refresh()
     connection.send_result(msg["id"], {"task": task})
+
+
+# --- Categories ---
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "wartungsplaner/get_categories",
+    }
+)
+@callback
+def ws_get_categories(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Handle get categories WebSocket command."""
+    store = _get_store(hass)
+    # Built-in categories
+    builtin = []
+    for cat in TaskCategory:
+        builtin.append({
+            "id": cat.value,
+            "name_de": CATEGORY_LABELS[cat]["de"],
+            "name_en": CATEGORY_LABELS[cat]["en"],
+            "icon": CATEGORY_ICONS[cat],
+            "builtin": True,
+        })
+    # Custom categories
+    custom = [
+        {**c, "builtin": False} for c in store.custom_categories.values()
+    ]
+    connection.send_result(msg["id"], {"categories": builtin + custom})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "wartungsplaner/add_category",
+        vol.Required("name_de"): str,
+        vol.Required("name_en"): str,
+        vol.Optional("icon", default="mdi:dots-horizontal"): str,
+    }
+)
+@websocket_api.async_response
+async def ws_add_category(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Handle add category WebSocket command."""
+    store = _get_store(hass)
+    category = await store.async_add_category({
+        "name_de": msg["name_de"],
+        "name_en": msg["name_en"],
+        "icon": msg.get("icon", "mdi:dots-horizontal"),
+    })
+    connection.send_result(msg["id"], {"category": category})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "wartungsplaner/delete_category",
+        vol.Required("category_id"): str,
+    }
+)
+@websocket_api.async_response
+async def ws_delete_category(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Handle delete category WebSocket command."""
+    store = _get_store(hass)
+    success = await store.async_delete_category(msg["category_id"])
+    if not success:
+        connection.send_error(
+            msg["id"], "cannot_delete", "Category not found or in use by tasks"
+        )
+        return
+    connection.send_result(msg["id"], {"success": True})
+
+
+# --- Custom Templates ---
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "wartungsplaner/add_custom_template",
+        vol.Required("name"): str,
+        vol.Optional("description", default=""): str,
+        vol.Optional("category", default="other"): str,
+        vol.Optional("priority", default="medium"): vol.In(
+            [e.value for e in TaskPriority]
+        ),
+        vol.Optional("interval_value", default=1): vol.All(
+            vol.Coerce(int), vol.Range(min=1)
+        ),
+        vol.Optional("interval_unit", default="months"): vol.In(
+            [e.value for e in IntervalUnit]
+        ),
+    }
+)
+@websocket_api.async_response
+async def ws_add_custom_template(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Handle add custom template WebSocket command."""
+    store = _get_store(hass)
+    template = await store.async_add_custom_template({
+        "name": msg["name"],
+        "description": msg.get("description", ""),
+        "category": msg.get("category", "other"),
+        "priority": msg.get("priority", "medium"),
+        "interval_value": msg.get("interval_value", 1),
+        "interval_unit": msg.get("interval_unit", "months"),
+    })
+    connection.send_result(msg["id"], {"template": template})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "wartungsplaner/delete_custom_template",
+        vol.Required("template_id"): str,
+    }
+)
+@websocket_api.async_response
+async def ws_delete_custom_template(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Handle delete custom template WebSocket command."""
+    store = _get_store(hass)
+    success = await store.async_delete_custom_template(msg["template_id"])
+    if not success:
+        connection.send_error(msg["id"], "not_found", "Custom template not found")
+        return
+    connection.send_result(msg["id"], {"success": True})

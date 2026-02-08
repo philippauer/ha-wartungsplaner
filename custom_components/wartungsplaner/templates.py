@@ -298,7 +298,7 @@ TASK_TEMPLATES: list[dict] = [
 
 def get_templates() -> list[dict]:
     """Return all available task templates."""
-    return TASK_TEMPLATES
+    return [{**t, "builtin": True} for t in TASK_TEMPLATES]
 
 
 def get_template_by_id(template_id: str) -> dict | None:

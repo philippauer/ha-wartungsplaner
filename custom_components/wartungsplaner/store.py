@@ -11,6 +11,8 @@ from dateutil.relativedelta import relativedelta
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
+from homeassistant.util.slugify import slugify
+
 from .const import DOMAIN, STORAGE_KEY, STORAGE_VERSION, IntervalUnit
 
 _LOGGER = logging.getLogger(__name__)
@@ -56,11 +58,23 @@ class WartungsplanerStore:
         self._hass = hass
         self._store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
         self._tasks: dict[str, dict[str, Any]] = {}
+        self._custom_templates: dict[str, dict[str, Any]] = {}
+        self._custom_categories: dict[str, dict[str, Any]] = {}
 
     @property
     def tasks(self) -> dict[str, dict[str, Any]]:
         """Return all tasks."""
         return self._tasks
+
+    @property
+    def custom_templates(self) -> dict[str, dict[str, Any]]:
+        """Return all custom templates."""
+        return self._custom_templates
+
+    @property
+    def custom_categories(self) -> dict[str, dict[str, Any]]:
+        """Return all custom categories."""
+        return self._custom_categories
 
     async def async_load(self) -> None:
         """Load data from storage."""
@@ -69,11 +83,17 @@ class WartungsplanerStore:
             self._tasks = data["tasks"]
         else:
             self._tasks = {}
+        self._custom_templates = (data or {}).get("custom_templates", {})
+        self._custom_categories = (data or {}).get("custom_categories", {})
         _LOGGER.debug("Loaded %d tasks from storage", len(self._tasks))
 
     async def async_save(self) -> None:
         """Save data to storage."""
-        await self._store.async_save({"tasks": self._tasks})
+        await self._store.async_save({
+            "tasks": self._tasks,
+            "custom_templates": self._custom_templates,
+            "custom_categories": self._custom_categories,
+        })
 
     async def async_add_task(self, task_data: dict[str, Any]) -> dict[str, Any]:
         """Add a new task."""
@@ -125,6 +145,7 @@ class WartungsplanerStore:
             "priority",
             "interval_value",
             "interval_unit",
+            "last_completed",
         ):
             if key in task_data:
                 task[key] = task_data[key]
@@ -210,3 +231,66 @@ class WartungsplanerStore:
         await self.async_save()
         _LOGGER.debug("Snoozed task: %s until %s", task["name"], until_date)
         return task
+
+    async def async_add_custom_template(
+        self, data: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Add a custom template."""
+        template_id = f"custom_{uuid.uuid4()}"
+        template = {
+            "id": template_id,
+            "name": data["name"],
+            "description": data.get("description", ""),
+            "category": data.get("category", "other"),
+            "priority": data.get("priority", "medium"),
+            "interval_value": data.get("interval_value", 1),
+            "interval_unit": data.get("interval_unit", "months"),
+            "builtin": False,
+        }
+        self._custom_templates[template_id] = template
+        await self.async_save()
+        _LOGGER.debug("Added custom template: %s (%s)", template["name"], template_id)
+        return template
+
+    async def async_delete_custom_template(self, template_id: str) -> bool:
+        """Delete a custom template."""
+        if template_id not in self._custom_templates:
+            _LOGGER.warning("Custom template not found: %s", template_id)
+            return False
+        name = self._custom_templates[template_id]["name"]
+        del self._custom_templates[template_id]
+        await self.async_save()
+        _LOGGER.debug("Deleted custom template: %s (%s)", name, template_id)
+        return True
+
+    async def async_add_category(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Add a custom category."""
+        cat_id = slugify(data["name_de"])
+        if cat_id in self._custom_categories:
+            # Ensure unique ID
+            cat_id = f"{cat_id}_{uuid.uuid4().hex[:6]}"
+        category = {
+            "id": cat_id,
+            "name_de": data["name_de"],
+            "name_en": data["name_en"],
+            "icon": data.get("icon", "mdi:dots-horizontal"),
+        }
+        self._custom_categories[cat_id] = category
+        await self.async_save()
+        _LOGGER.debug("Added custom category: %s (%s)", category["name_de"], cat_id)
+        return category
+
+    async def async_delete_category(self, cat_id: str) -> bool:
+        """Delete a custom category. Fails if tasks use it."""
+        if cat_id not in self._custom_categories:
+            _LOGGER.warning("Custom category not found: %s", cat_id)
+            return False
+        # Check if any task uses this category
+        for task in self._tasks.values():
+            if task.get("category") == cat_id:
+                return False
+        name = self._custom_categories[cat_id]["name_de"]
+        del self._custom_categories[cat_id]
+        await self.async_save()
+        _LOGGER.debug("Deleted custom category: %s (%s)", name, cat_id)
+        return True

@@ -36,6 +36,7 @@ const STRINGS = {
     noUrgent: "Keine dringenden Aufgaben",
     urgentTasks: "Dringende Aufgaben",
     lastCompleted: "Zuletzt erledigt",
+    leaveBlankToday: "Leer = Heute",
     nextDue: "Nächste Fälligkeit",
     days: "Tage",
     weeks: "Wochen",
@@ -46,18 +47,17 @@ const STRINGS = {
     confirmDelete: "Möchten Sie diese Aufgabe wirklich löschen?",
     completionNotes: "Erledigungs-Notizen (optional)",
     never: "Nie",
-    categories: {
-      heating: "Heizung",
-      safety: "Sicherheit",
-      plumbing: "Sanitär",
-      appliances: "Geräte",
-      exterior: "Außen",
-      interior: "Innen",
-      electrical: "Elektrik",
-      garden: "Garten",
-      cleaning: "Reinigung",
-      other: "Sonstiges",
-    },
+    manageCategories: "Kategorien verwalten",
+    addCategory: "Kategorie hinzufügen",
+    deleteCategory: "Kategorie löschen",
+    categoryNameDe: "Name (Deutsch)",
+    categoryNameEn: "Name (Englisch)",
+    categoryIcon: "Icon (mdi:...)",
+    categoryInUse: "Kategorie wird von Aufgaben verwendet",
+    builtinCategory: "Standard-Kategorie",
+    saveAsTemplate: "Als Vorlage speichern",
+    deleteTemplate: "Vorlage löschen",
+    customTemplate: "Eigene Vorlage",
     priorities: {
       low: "Niedrig",
       medium: "Mittel",
@@ -104,6 +104,7 @@ const STRINGS = {
     noUrgent: "No urgent tasks",
     urgentTasks: "Urgent Tasks",
     lastCompleted: "Last completed",
+    leaveBlankToday: "Leave blank for today",
     nextDue: "Next due",
     days: "Days",
     weeks: "Weeks",
@@ -114,18 +115,17 @@ const STRINGS = {
     confirmDelete: "Are you sure you want to delete this task?",
     completionNotes: "Completion notes (optional)",
     never: "Never",
-    categories: {
-      heating: "Heating",
-      safety: "Safety",
-      plumbing: "Plumbing",
-      appliances: "Appliances",
-      exterior: "Exterior",
-      interior: "Interior",
-      electrical: "Electrical",
-      garden: "Garden",
-      cleaning: "Cleaning",
-      other: "Other",
-    },
+    manageCategories: "Manage Categories",
+    addCategory: "Add Category",
+    deleteCategory: "Delete Category",
+    categoryNameDe: "Name (German)",
+    categoryNameEn: "Name (English)",
+    categoryIcon: "Icon (mdi:...)",
+    categoryInUse: "Category is used by tasks",
+    builtinCategory: "Built-in category",
+    saveAsTemplate: "Save as template",
+    deleteTemplate: "Delete template",
+    customTemplate: "Custom template",
     priorities: {
       low: "Low",
       medium: "Medium",
@@ -157,19 +157,6 @@ const PRIORITY_COLORS = {
   critical: "#f44336",
 };
 
-const CATEGORY_ICONS = {
-  heating: "mdi:radiator",
-  safety: "mdi:shield-check",
-  plumbing: "mdi:water-pump",
-  appliances: "mdi:washing-machine",
-  exterior: "mdi:home-roof",
-  interior: "mdi:sofa",
-  electrical: "mdi:flash",
-  garden: "mdi:flower",
-  cleaning: "mdi:broom",
-  other: "mdi:dots-horizontal",
-};
-
 class WartungsplanerPanel extends HTMLElement {
   constructor() {
     super();
@@ -178,6 +165,7 @@ class WartungsplanerPanel extends HTMLElement {
     this._tasks = {};
     this._stats = {};
     this._templates = [];
+    this._categories = [];
     this._activeTab = "overview";
     this._filterCategory = "all";
     this._filterStatus = "all";
@@ -192,7 +180,7 @@ class WartungsplanerPanel extends HTMLElement {
     }
     if (!this._initialized) {
       this._initialized = true;
-      this._loadData();
+      this._loadCategories().then(() => this._loadData());
     }
   }
 
@@ -204,8 +192,29 @@ class WartungsplanerPanel extends HTMLElement {
     return STRINGS[this._lang] || STRINGS.de;
   }
 
+  _getCategoryLabel(id) {
+    const cat = this._categories.find((c) => c.id === id);
+    if (!cat) return id;
+    return this._lang === "de" ? cat.name_de : cat.name_en;
+  }
+
+  _getCategoryIcon(id) {
+    const cat = this._categories.find((c) => c.id === id);
+    return cat ? cat.icon : "mdi:dots-horizontal";
+  }
+
   connectedCallback() {
     this._render();
+  }
+
+  async _loadCategories() {
+    if (!this._hass) return;
+    try {
+      const result = await this._hass.callWS({ type: "wartungsplaner/get_categories" });
+      this._categories = result.categories || [];
+    } catch (e) {
+      console.error("Wartungsplaner: Failed to load categories", e);
+    }
   }
 
   async _loadData() {
@@ -344,7 +353,11 @@ class WartungsplanerPanel extends HTMLElement {
       return a.days_until_due - b.days_until_due;
     });
 
-    const categories = ["all", ...Object.keys(t.categories)];
+    const categoryOptions = this._categories.map((c) => {
+      const label = this._lang === "de" ? c.name_de : c.name_en;
+      return `<option value="${c.id}" ${this._filterCategory === c.id ? "selected" : ""}>${label}</option>`;
+    });
+
     const statuses = ["all", ...Object.keys(t.statuses)];
 
     return `
@@ -352,14 +365,8 @@ class WartungsplanerPanel extends HTMLElement {
         <div class="toolbar">
           <div class="filters">
             <select class="filter-select" id="filterCategory">
-              ${categories
-                .map(
-                  (c) =>
-                    `<option value="${c}" ${this._filterCategory === c ? "selected" : ""}>${
-                      c === "all" ? t.filterAll : t.categories[c]
-                    }</option>`
-                )
-                .join("")}
+              <option value="all" ${this._filterCategory === "all" ? "selected" : ""}>${t.filterAll}</option>
+              ${categoryOptions.join("")}
             </select>
             <select class="filter-select" id="filterStatus">
               ${statuses
@@ -373,9 +380,14 @@ class WartungsplanerPanel extends HTMLElement {
             </select>
             <input type="text" class="search-input" id="searchInput" placeholder="${t.search}" value="${this._searchQuery}" />
           </div>
-          <button class="btn btn-primary" id="addTaskBtn">
-            <ha-icon icon="mdi:plus"></ha-icon> ${t.addTask}
-          </button>
+          <div class="toolbar-buttons">
+            <button class="btn btn-icon" id="manageCategoriesBtn" title="${t.manageCategories}">
+              <ha-icon icon="mdi:cog"></ha-icon>
+            </button>
+            <button class="btn btn-primary" id="addTaskBtn">
+              <ha-icon icon="mdi:plus"></ha-icon> ${t.addTask}
+            </button>
+          </div>
         </div>
 
         ${
@@ -391,9 +403,9 @@ class WartungsplanerPanel extends HTMLElement {
     const t = this.t;
     const statusColor = STATUS_COLORS[task.status] || "#9e9e9e";
     const priorityColor = PRIORITY_COLORS[task.priority] || "#2196f3";
-    const categoryIcon = CATEGORY_ICONS[task.category] || "mdi:dots-horizontal";
+    const categoryIcon = this._getCategoryIcon(task.category);
     const statusLabel = t.statuses[task.status] || task.status;
-    const categoryLabel = t.categories[task.category] || task.category;
+    const categoryLabel = this._getCategoryLabel(task.category);
     const priorityLabel = t.priorities[task.priority] || task.priority;
     const daysText =
       task.days_until_due != null
@@ -425,6 +437,9 @@ class WartungsplanerPanel extends HTMLElement {
             <span><ha-icon icon="mdi:refresh"></ha-icon> ${task.interval_value} ${t[task.interval_unit] || task.interval_unit}</span>
           </div>
           <div class="task-actions">
+            <button class="btn btn-small save-template-btn" data-task-id="${task.id}" title="${t.saveAsTemplate}">
+              <ha-icon icon="mdi:content-save-outline"></ha-icon>
+            </button>
             <button class="btn btn-small btn-success complete-btn" data-task-id="${task.id}" title="${t.completeTask}">
               <ha-icon icon="mdi:check"></ha-icon>
             </button>
@@ -461,8 +476,8 @@ class WartungsplanerPanel extends HTMLElement {
             ([cat, tmpls]) => `
           <div class="template-category">
             <h3>
-              <ha-icon icon="${CATEGORY_ICONS[cat] || "mdi:dots-horizontal"}"></ha-icon>
-              ${t.categories[cat] || cat}
+              <ha-icon icon="${this._getCategoryIcon(cat)}"></ha-icon>
+              ${this._getCategoryLabel(cat)}
             </h3>
             <div class="template-list">
               ${tmpls
@@ -470,7 +485,10 @@ class WartungsplanerPanel extends HTMLElement {
                   (tmpl) => `
                 <div class="template-card">
                   <div class="template-info">
-                    <div class="template-name">${this._escapeHtml(tmpl.name)}</div>
+                    <div class="template-name">
+                      ${this._escapeHtml(tmpl.name)}
+                      ${!tmpl.builtin ? `<span class="badge badge-custom">${t.customTemplate}</span>` : ""}
+                    </div>
                     <div class="template-desc">${this._escapeHtml(tmpl.description)}</div>
                     <div class="template-meta">
                       <span class="badge" style="background-color: ${PRIORITY_COLORS[tmpl.priority]}; color: white;">
@@ -479,9 +497,14 @@ class WartungsplanerPanel extends HTMLElement {
                       <span>${tmpl.interval_value} ${t[tmpl.interval_unit] || tmpl.interval_unit}</span>
                     </div>
                   </div>
-                  <button class="btn btn-primary btn-small add-template-btn" data-template-id="${tmpl.id}">
-                    <ha-icon icon="mdi:plus"></ha-icon>
-                  </button>
+                  <div class="template-actions">
+                    ${!tmpl.builtin ? `<button class="btn btn-small btn-danger delete-template-btn" data-template-id="${tmpl.id}" title="${t.deleteTemplate}">
+                      <ha-icon icon="mdi:delete"></ha-icon>
+                    </button>` : ""}
+                    <button class="btn btn-primary btn-small add-template-btn" data-template-id="${tmpl.id}">
+                      <ha-icon icon="mdi:plus"></ha-icon>
+                    </button>
+                  </div>
                 </div>
               `
                 )
@@ -541,6 +564,12 @@ class WartungsplanerPanel extends HTMLElement {
       addBtn.addEventListener("click", () => this._showTaskDialog());
     }
 
+    // Manage categories button
+    const manageCatBtn = root.getElementById("manageCategoriesBtn");
+    if (manageCatBtn) {
+      manageCatBtn.addEventListener("click", () => this._showManageCategoriesDialog());
+    }
+
     // Task card actions
     root.querySelectorAll(".complete-btn").forEach((btn) => {
       btn.addEventListener("click", (e) => {
@@ -564,6 +593,13 @@ class WartungsplanerPanel extends HTMLElement {
       });
     });
 
+    root.querySelectorAll(".save-template-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this._saveAsTemplate(btn.dataset.taskId);
+      });
+    });
+
     // Template add buttons
     root.querySelectorAll(".add-template-btn").forEach((btn) => {
       btn.addEventListener("click", (e) => {
@@ -571,11 +607,28 @@ class WartungsplanerPanel extends HTMLElement {
         this._addFromTemplate(btn.dataset.templateId);
       });
     });
+
+    // Template delete buttons
+    root.querySelectorAll(".delete-template-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this._deleteCustomTemplate(btn.dataset.templateId);
+      });
+    });
   }
 
   _showTaskDialog(task = null) {
     const t = this.t;
     const isEdit = task !== null;
+
+    const categoryOptions = this._categories.map((c) => {
+      const label = this._lang === "de" ? c.name_de : c.name_en;
+      const selected = isEdit && task.category === c.id ? "selected" : "";
+      return `<option value="${c.id}" ${selected}>${label}</option>`;
+    });
+
+    const lastCompletedValue = isEdit && task.last_completed ? task.last_completed : "";
+
     const dialog = document.createElement("div");
     dialog.innerHTML = `
       <div class="dialog-overlay">
@@ -593,12 +646,7 @@ class WartungsplanerPanel extends HTMLElement {
             <div class="form-group">
               <label>${t.category}</label>
               <select id="taskCategory">
-                ${Object.entries(t.categories)
-                  .map(
-                    ([val, label]) =>
-                      `<option value="${val}" ${isEdit && task.category === val ? "selected" : ""}>${label}</option>`
-                  )
-                  .join("")}
+                ${categoryOptions.join("")}
               </select>
             </div>
             <div class="form-group">
@@ -628,6 +676,10 @@ class WartungsplanerPanel extends HTMLElement {
               </select>
             </div>
           </div>
+          <div class="form-group">
+            <label>${t.lastCompleted} <span class="hint">(${t.leaveBlankToday})</span></label>
+            <input type="date" id="taskLastCompleted" value="${lastCompletedValue}" />
+          </div>
           <div class="dialog-actions">
             <button class="btn" id="dialogCancel">${t.cancel}</button>
             <button class="btn btn-primary" id="dialogSave">${t.save}</button>
@@ -647,6 +699,9 @@ class WartungsplanerPanel extends HTMLElement {
       const name = dialog.querySelector("#taskName").value.trim();
       if (!name) return;
 
+      const lastCompletedInput = dialog.querySelector("#taskLastCompleted").value;
+      const lastCompleted = lastCompletedInput || new Date().toISOString().split("T")[0];
+
       const data = {
         name,
         description: dialog.querySelector("#taskDesc").value.trim(),
@@ -654,6 +709,7 @@ class WartungsplanerPanel extends HTMLElement {
         priority: dialog.querySelector("#taskPriority").value,
         interval_value: parseInt(dialog.querySelector("#taskIntervalValue").value, 10),
         interval_unit: dialog.querySelector("#taskIntervalUnit").value,
+        last_completed: lastCompleted,
       };
 
       try {
@@ -758,6 +814,146 @@ class WartungsplanerPanel extends HTMLElement {
         console.error("Wartungsplaner: Failed to delete task", e);
       }
     });
+  }
+
+  _showManageCategoriesDialog() {
+    const t = this.t;
+    const dialog = document.createElement("div");
+
+    const renderList = () => {
+      const listEl = dialog.querySelector(".category-list");
+      if (!listEl) return;
+      listEl.innerHTML = this._categories
+        .map(
+          (cat) => `
+          <div class="category-item">
+            <ha-icon icon="${cat.icon}"></ha-icon>
+            <span class="category-item-name">${this._lang === "de" ? cat.name_de : cat.name_en}</span>
+            ${cat.builtin
+              ? `<span class="badge badge-builtin">${t.builtinCategory}</span>`
+              : `<button class="btn btn-small btn-danger delete-cat-btn" data-cat-id="${cat.id}" title="${t.deleteCategory}">
+                  <ha-icon icon="mdi:delete"></ha-icon>
+                </button>`
+            }
+          </div>
+        `)
+        .join("");
+
+      // Re-attach delete listeners
+      listEl.querySelectorAll(".delete-cat-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          try {
+            await this._hass.callWS({
+              type: "wartungsplaner/delete_category",
+              category_id: btn.dataset.catId,
+            });
+            await this._loadCategories();
+            renderList();
+          } catch (e) {
+            alert(t.categoryInUse);
+          }
+        });
+      });
+    };
+
+    dialog.innerHTML = `
+      <div class="dialog-overlay">
+        <div class="dialog">
+          <h2>${t.manageCategories}</h2>
+          <div class="category-list"></div>
+          <hr />
+          <h3>${t.addCategory}</h3>
+          <div class="form-group">
+            <label>${t.categoryNameDe}</label>
+            <input type="text" id="newCatNameDe" />
+          </div>
+          <div class="form-group">
+            <label>${t.categoryNameEn}</label>
+            <input type="text" id="newCatNameEn" />
+          </div>
+          <div class="form-group">
+            <label>${t.categoryIcon}</label>
+            <input type="text" id="newCatIcon" value="mdi:dots-horizontal" />
+          </div>
+          <div class="dialog-actions">
+            <button class="btn" id="dialogClose">${t.close}</button>
+            <button class="btn btn-primary" id="dialogAddCat">
+              <ha-icon icon="mdi:plus"></ha-icon> ${t.add}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    this.shadowRoot.appendChild(dialog);
+    renderList();
+
+    dialog.querySelector("#dialogClose").addEventListener("click", () => {
+      dialog.remove();
+      this._render();
+    });
+    dialog.querySelector(".dialog-overlay").addEventListener("click", (e) => {
+      if (e.target.classList.contains("dialog-overlay")) {
+        dialog.remove();
+        this._render();
+      }
+    });
+
+    dialog.querySelector("#dialogAddCat").addEventListener("click", async () => {
+      const nameDe = dialog.querySelector("#newCatNameDe").value.trim();
+      const nameEn = dialog.querySelector("#newCatNameEn").value.trim();
+      const icon = dialog.querySelector("#newCatIcon").value.trim() || "mdi:dots-horizontal";
+      if (!nameDe || !nameEn) return;
+
+      try {
+        await this._hass.callWS({
+          type: "wartungsplaner/add_category",
+          name_de: nameDe,
+          name_en: nameEn,
+          icon: icon,
+        });
+        dialog.querySelector("#newCatNameDe").value = "";
+        dialog.querySelector("#newCatNameEn").value = "";
+        dialog.querySelector("#newCatIcon").value = "mdi:dots-horizontal";
+        await this._loadCategories();
+        renderList();
+      } catch (e) {
+        console.error("Wartungsplaner: Failed to add category", e);
+      }
+    });
+  }
+
+  async _saveAsTemplate(taskId) {
+    const task = this._tasks[taskId];
+    if (!task) return;
+    try {
+      await this._hass.callWS({
+        type: "wartungsplaner/add_custom_template",
+        name: task.name,
+        description: task.description || "",
+        category: task.category,
+        priority: task.priority,
+        interval_value: task.interval_value,
+        interval_unit: task.interval_unit,
+      });
+      // Reload templates so next visit to templates tab shows the new one
+      this._templates = [];
+    } catch (e) {
+      console.error("Wartungsplaner: Failed to save as template", e);
+    }
+  }
+
+  async _deleteCustomTemplate(templateId) {
+    try {
+      await this._hass.callWS({
+        type: "wartungsplaner/delete_custom_template",
+        template_id: templateId,
+      });
+      await this._loadTemplates();
+      this._render();
+    } catch (e) {
+      console.error("Wartungsplaner: Failed to delete template", e);
+    }
   }
 
   async _addFromTemplate(templateId) {
@@ -974,6 +1170,18 @@ class WartungsplanerPanel extends HTMLElement {
         white-space: nowrap;
       }
 
+      .badge-custom {
+        background-color: var(--wp-primary);
+        color: white;
+        margin-left: 6px;
+      }
+
+      .badge-builtin {
+        background-color: var(--wp-divider);
+        color: var(--wp-text-secondary);
+        margin-left: auto;
+      }
+
       .task-description {
         font-size: 13px;
         color: var(--wp-text-secondary);
@@ -1030,6 +1238,10 @@ class WartungsplanerPanel extends HTMLElement {
         --mdc-icon-size: 18px;
       }
 
+      .btn-icon {
+        padding: 8px;
+      }
+
       .btn-primary {
         background: var(--wp-primary);
         color: white;
@@ -1082,6 +1294,12 @@ class WartungsplanerPanel extends HTMLElement {
         flex-wrap: wrap;
       }
 
+      .toolbar-buttons {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
       .filters {
         display: flex;
         gap: 8px;
@@ -1091,12 +1309,28 @@ class WartungsplanerPanel extends HTMLElement {
 
       .filter-select, .search-input {
         padding: 8px 12px;
-        border: 1px solid var(--wp-divider);
-        border-radius: 8px;
+        border: none;
+        border-bottom: 2px solid var(--wp-divider);
+        border-radius: 4px;
         background: var(--wp-card-bg);
         color: var(--wp-text);
         font-size: 14px;
         font-family: inherit;
+        appearance: none;
+        -webkit-appearance: none;
+        transition: border-bottom-color 0.2s;
+      }
+
+      .filter-select:focus, .search-input:focus {
+        outline: none;
+        border-bottom-color: var(--wp-primary);
+      }
+
+      .filter-select {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23727272' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        padding-right: 28px;
       }
 
       .search-input {
@@ -1160,6 +1394,8 @@ class WartungsplanerPanel extends HTMLElement {
         font-weight: 500;
         font-size: 14px;
         margin-bottom: 2px;
+        display: flex;
+        align-items: center;
       }
 
       .template-desc {
@@ -1175,6 +1411,13 @@ class WartungsplanerPanel extends HTMLElement {
         align-items: center;
         font-size: 12px;
         color: var(--wp-text-secondary);
+      }
+
+      .template-actions {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        flex-shrink: 0;
       }
 
       /* Empty state */
@@ -1230,6 +1473,18 @@ class WartungsplanerPanel extends HTMLElement {
         font-size: 20px;
       }
 
+      .dialog h3 {
+        margin: 12px 0 8px;
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .dialog hr {
+        border: none;
+        border-top: 1px solid var(--wp-divider);
+        margin: 16px 0;
+      }
+
       .form-group {
         margin-bottom: 14px;
       }
@@ -1242,18 +1497,47 @@ class WartungsplanerPanel extends HTMLElement {
         color: var(--wp-text-secondary);
       }
 
+      .form-group label .hint {
+        font-weight: 400;
+        font-size: 12px;
+        opacity: 0.7;
+      }
+
       .form-group input,
       .form-group textarea,
       .form-group select {
         width: 100%;
         padding: 8px 12px;
-        border: 1px solid var(--wp-divider);
-        border-radius: 8px;
+        border: none;
+        border-bottom: 2px solid var(--wp-divider);
+        border-radius: 4px;
         background: var(--wp-bg);
         color: var(--wp-text);
         font-size: 14px;
         font-family: inherit;
         box-sizing: border-box;
+        appearance: none;
+        -webkit-appearance: none;
+        transition: border-bottom-color 0.2s;
+      }
+
+      .form-group input:focus,
+      .form-group textarea:focus,
+      .form-group select:focus {
+        outline: none;
+        border-bottom-color: var(--wp-primary);
+      }
+
+      .form-group select {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23727272' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        padding-right: 28px;
+      }
+
+      .form-group input[type="date"] {
+        -webkit-appearance: none;
+        appearance: none;
       }
 
       .form-group textarea {
@@ -1279,6 +1563,35 @@ class WartungsplanerPanel extends HTMLElement {
         line-height: 1.5;
       }
 
+      /* Category list in manage dialog */
+      .category-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .category-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background: var(--wp-bg);
+        border-radius: 8px;
+      }
+
+      .category-item ha-icon {
+        --mdc-icon-size: 20px;
+        color: var(--wp-primary);
+        flex-shrink: 0;
+      }
+
+      .category-item-name {
+        flex: 1;
+        font-size: 14px;
+      }
+
       /* Responsive */
       @media (max-width: 600px) {
         .container {
@@ -1296,6 +1609,10 @@ class WartungsplanerPanel extends HTMLElement {
         .toolbar {
           flex-direction: column;
           align-items: stretch;
+        }
+
+        .toolbar-buttons {
+          justify-content: flex-end;
         }
 
         .filters {

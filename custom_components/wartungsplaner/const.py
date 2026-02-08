@@ -92,6 +92,20 @@ class TaskStatus(StrEnum):
     NEVER_DONE = "never_done"
 
 
+CATEGORY_ICONS = {
+    TaskCategory.HEATING: "mdi:radiator",
+    TaskCategory.SAFETY: "mdi:shield-check",
+    TaskCategory.PLUMBING: "mdi:water-pump",
+    TaskCategory.APPLIANCES: "mdi:washing-machine",
+    TaskCategory.EXTERIOR: "mdi:home-roof",
+    TaskCategory.INTERIOR: "mdi:sofa",
+    TaskCategory.ELECTRICAL: "mdi:flash",
+    TaskCategory.GARDEN: "mdi:flower",
+    TaskCategory.CLEANING: "mdi:broom",
+    TaskCategory.OTHER: "mdi:dots-horizontal",
+}
+
+
 STATUS_LABELS = {
     TaskStatus.DONE: {"de": "Erledigt", "en": "Done"},
     TaskStatus.DUE_SOON: {"de": "Bald fällig", "en": "Due soon"},
