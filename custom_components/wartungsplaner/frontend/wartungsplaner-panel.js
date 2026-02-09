@@ -63,6 +63,9 @@ const STRINGS = {
     templateSaved: "Vorlage gespeichert",
     hiddenTemplates: "ausgeblendete Vorlage(n)",
     restoreTemplates: "Wiederherstellen",
+    suggestDescription: "Beschreibung vorschlagen",
+    suggestLoading: "Generiere...",
+    suggestError: "Beschreibung konnte nicht generiert werden. Ist ein KI-Assistent in HA konfiguriert?",
     priorities: {
       low: "Niedrig",
       medium: "Mittel",
@@ -136,6 +139,9 @@ const STRINGS = {
     templateSaved: "Template saved",
     hiddenTemplates: "hidden template(s)",
     restoreTemplates: "Restore",
+    suggestDescription: "Suggest description",
+    suggestLoading: "Generating...",
+    suggestError: "Could not generate description. Is an AI assistant configured in HA?",
     priorities: {
       low: "Low",
       medium: "Medium",
@@ -678,6 +684,9 @@ class WartungsplanerPanel extends HTMLElement {
           <div class="form-group">
             <label>${t.description}</label>
             <textarea id="taskDesc" rows="3">${isEdit ? this._escapeHtml(task.description || "") : ""}</textarea>
+            <button class="btn btn-small btn-ai-suggest" id="suggestDescBtn" type="button" disabled>
+              <ha-icon icon="mdi:auto-fix"></ha-icon> ${t.suggestDescription}
+            </button>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -726,6 +735,40 @@ class WartungsplanerPanel extends HTMLElement {
     `;
 
     this.shadowRoot.appendChild(dialog);
+
+    // AI suggest button: enable/disable based on name input
+    const nameInput = dialog.querySelector("#taskName");
+    const suggestBtn = dialog.querySelector("#suggestDescBtn");
+    const updateSuggestBtn = () => {
+      suggestBtn.disabled = !nameInput.value.trim();
+    };
+    nameInput.addEventListener("input", updateSuggestBtn);
+    updateSuggestBtn();
+
+    suggestBtn.addEventListener("click", async () => {
+      const taskName = nameInput.value.trim();
+      if (!taskName) return;
+
+      const originalText = suggestBtn.innerHTML;
+      suggestBtn.disabled = true;
+      suggestBtn.innerHTML = `<span class="ai-spinner"></span> ${t.suggestLoading}`;
+
+      try {
+        const result = await this._hass.callWS({
+          type: "wartungsplaner/suggest_description",
+          task_name: taskName,
+          category: dialog.querySelector("#taskCategory").value,
+          language: this._lang,
+        });
+        dialog.querySelector("#taskDesc").value = result.description;
+      } catch (e) {
+        console.error("Wartungsplaner: AI suggest failed", e);
+        this._showToast(t.suggestError);
+      } finally {
+        suggestBtn.innerHTML = originalText;
+        updateSuggestBtn();
+      }
+    });
 
     dialog.querySelector("#dialogCancel").addEventListener("click", () => dialog.remove());
     dialog.querySelector(".dialog-overlay").addEventListener("click", (e) => {
@@ -1629,6 +1672,38 @@ class WartungsplanerPanel extends HTMLElement {
 
       .form-group textarea {
         resize: vertical;
+      }
+
+      .btn-ai-suggest {
+        margin-top: 6px;
+        border: 1px solid var(--wp-primary);
+        color: var(--wp-primary);
+        background: transparent;
+      }
+
+      .btn-ai-suggest:hover:not(:disabled) {
+        background: var(--wp-primary);
+        color: white;
+      }
+
+      .btn-ai-suggest:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .ai-spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: wp-spin 0.6s linear infinite;
+        vertical-align: middle;
+      }
+
+      @keyframes wp-spin {
+        to { transform: rotate(360deg); }
       }
 
       .form-row {

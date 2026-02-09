@@ -40,6 +40,7 @@ def async_register_websocket_api(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_restore_hidden_templates)
     websocket_api.async_register_command(hass, ws_get_settings)
     websocket_api.async_register_command(hass, ws_update_settings)
+    websocket_api.async_register_command(hass, ws_suggest_description)
 
 
 def _get_coordinator(hass: HomeAssistant):
@@ -500,3 +501,69 @@ async def ws_update_settings(
     settings = await store.async_update_settings(data)
     await coordinator.async_request_refresh()
     connection.send_result(msg["id"], {"settings": settings})
+
+
+# --- AI Description Suggestion ---
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "wartungsplaner/suggest_description",
+        vol.Required("task_name"): str,
+        vol.Optional("category"): str,
+        vol.Optional("language", default="de"): vol.In(["de", "en"]),
+    }
+)
+@websocket_api.async_response
+async def ws_suggest_description(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Handle suggest description WebSocket command using conversation agent."""
+    task_name = msg["task_name"]
+    language = msg.get("language", "de")
+    category_id = msg.get("category")
+
+    # Resolve category label for the prompt
+    category_label = ""
+    if category_id:
+        try:
+            cat_enum = TaskCategory(category_id)
+            category_label = CATEGORY_LABELS[cat_enum][language]
+        except (ValueError, KeyError):
+            # Custom category — use the raw id as label
+            category_label = category_id
+
+    if language == "de":
+        prompt = (
+            f"Erstelle eine kurze, praktische Beschreibung (2-3 Sätze) für die "
+            f"Hauswartungsaufgabe '{task_name}'"
+        )
+        if category_label:
+            prompt += f" in der Kategorie '{category_label}'"
+        prompt += ". Beschreibe konkret was zu tun ist. Antworte nur mit der Beschreibung."
+    else:
+        prompt = (
+            f"Create a short, practical description (2-3 sentences) for the "
+            f"household maintenance task '{task_name}'"
+        )
+        if category_label:
+            prompt += f" in the category '{category_label}'"
+        prompt += ". Describe specifically what needs to be done. Reply only with the description."
+
+    try:
+        result = await hass.services.async_call(
+            "conversation",
+            "process",
+            {"text": prompt, "language": language},
+            blocking=True,
+            return_response=True,
+        )
+        speech = result["response"]["speech"]["plain"]["speech"]
+        connection.send_result(msg["id"], {"description": speech})
+    except Exception:
+        _LOGGER.exception("Failed to get AI description suggestion")
+        connection.send_error(
+            msg["id"], "conversation_failed", "Failed to generate description"
+        )
