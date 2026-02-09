@@ -3,7 +3,7 @@
 from enum import StrEnum
 
 DOMAIN = "wartungsplaner"
-VERSION = "1.5.2"
+VERSION = "1.5.3"
 
 # Storage
 STORAGE_KEY = "wartungsplaner.tasks"

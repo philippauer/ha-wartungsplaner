@@ -645,7 +645,13 @@ class WartungsplanerPanel extends HTMLElement {
     if (searchInput) {
       searchInput.addEventListener("input", (e) => {
         this._searchQuery = e.target.value;
+        const pos = e.target.selectionStart;
         this._render();
+        const newInput = this.shadowRoot.getElementById("searchInput");
+        if (newInput) {
+          newInput.focus();
+          newInput.setSelectionRange(pos, pos);
+        }
       });
     }
 
