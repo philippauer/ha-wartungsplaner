@@ -485,6 +485,7 @@ def ws_get_settings(
         vol.Optional("due_soon_days"): vol.All(
             vol.Coerce(int), vol.Range(min=1, max=90)
         ),
+        vol.Optional("conversation_agent_id"): str,
     }
 )
 @websocket_api.async_response
@@ -552,11 +553,19 @@ async def ws_suggest_description(
             prompt += f" in the category '{category_label}'"
         prompt += ". Describe specifically what needs to be done. Reply only with the description."
 
+    # Use configured agent or fall back to default
+    store = _get_store(hass)
+    agent_id = store.settings.get("conversation_agent_id")
+
+    service_data = {"text": prompt, "language": language}
+    if agent_id:
+        service_data["agent_id"] = agent_id
+
     try:
         result = await hass.services.async_call(
             "conversation",
             "process",
-            {"text": prompt, "language": language},
+            service_data,
             blocking=True,
             return_response=True,
         )

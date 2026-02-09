@@ -68,6 +68,9 @@ const STRINGS = {
     suggestError: "Beschreibung konnte nicht generiert werden.",
     suggestNoAgent: "Kein KI-Assistent konfiguriert. Bitte unter Einstellungen \u2192 Sprachassistenten einen KI-basierten Conversation Agent (z.B. OpenAI, Google AI, Ollama) einrichten.",
     suggestHint: "Nutzt den in HA konfigurierten KI-Assistenten (Einstellungen \u2192 Sprachassistenten)",
+    conversationAgent: "KI-Assistent (Conversation Agent)",
+    conversationAgentHint: "Für die KI-Beschreibungsvorschläge",
+    noAgentSelected: "Standard (HA-Standard)",
     priorities: {
       low: "Niedrig",
       medium: "Mittel",
@@ -146,6 +149,9 @@ const STRINGS = {
     suggestError: "Could not generate description.",
     suggestNoAgent: "No AI assistant configured. Please set up an AI-based conversation agent (e.g. OpenAI, Google AI, Ollama) under Settings \u2192 Voice Assistants.",
     suggestHint: "Uses the AI assistant configured in HA (Settings \u2192 Voice Assistants)",
+    conversationAgent: "AI Assistant (Conversation Agent)",
+    conversationAgentHint: "For AI description suggestions",
+    noAgentSelected: "Default (HA default)",
     priorities: {
       low: "Low",
       medium: "Medium",
@@ -958,6 +964,12 @@ class WartungsplanerPanel extends HTMLElement {
             <label>${t.dueSoonDays}</label>
             <input type="number" id="settingDueSoonDays" min="1" max="90" value="${this._settings.due_soon_days || 7}" />
           </div>
+          <div class="form-group">
+            <label>${t.conversationAgent} <span class="hint">(${t.conversationAgentHint})</span></label>
+            <select id="settingConversationAgent">
+              <option value="">${t.noAgentSelected}</option>
+            </select>
+          </div>
           <hr />
           <h3>${t.manageCategories}</h3>
           <div class="category-list"></div>
@@ -991,15 +1003,43 @@ class WartungsplanerPanel extends HTMLElement {
     this.shadowRoot.appendChild(dialog);
     renderList();
 
+    // Load available conversation agents
+    const agentSelect = dialog.querySelector("#settingConversationAgent");
+    (async () => {
+      try {
+        const result = await this._hass.callWS({ type: "conversation/agent/list", language: this._lang });
+        const agents = result.agents || [];
+        for (const agent of agents) {
+          const opt = document.createElement("option");
+          opt.value = agent.id;
+          opt.textContent = agent.name;
+          if (agent.id === (this._settings.conversation_agent_id || "")) {
+            opt.selected = true;
+          }
+          agentSelect.appendChild(opt);
+        }
+      } catch (e) {
+        console.error("Wartungsplaner: Failed to load conversation agents", e);
+      }
+    })();
+
     const saveSettingsAndClose = async () => {
       const dueSoonDays = parseInt(dialog.querySelector("#settingDueSoonDays").value, 10);
+      const agentId = dialog.querySelector("#settingConversationAgent").value;
+      const settingsToUpdate = {};
       if (dueSoonDays >= 1 && dueSoonDays <= 90 && dueSoonDays !== this._settings.due_soon_days) {
+        settingsToUpdate.due_soon_days = dueSoonDays;
+      }
+      if (agentId !== (this._settings.conversation_agent_id || "")) {
+        settingsToUpdate.conversation_agent_id = agentId;
+      }
+      if (Object.keys(settingsToUpdate).length > 0) {
         try {
           await this._hass.callWS({
             type: "wartungsplaner/update_settings",
-            due_soon_days: dueSoonDays,
+            ...settingsToUpdate,
           });
-          this._settings.due_soon_days = dueSoonDays;
+          Object.assign(this._settings, settingsToUpdate);
           await this._loadData();
         } catch (e) {
           console.error("Wartungsplaner: Failed to save settings", e);
