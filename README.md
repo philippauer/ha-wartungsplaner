@@ -14,7 +14,7 @@ Eine umfassende HACS Custom Integration zur Planung und Verwaltung von Haushalts
 
 ## Features
 
-- **Aufgabenverwaltung**: Erstellen, bearbeiten, erledigen und löschen von Wartungsaufgaben
+- **Aufgabenverwaltung**: Erstellen, bearbeiten, erledigen, aufschieben und löschen von Wartungsaufgaben
 - **Hersteller-Feld**: Optionale Herstellerangabe pro Aufgabe (z.B. Bosch, Viessmann) – wird in Klammern hinter dem Aufgabennamen angezeigt
 - **KI-Beschreibungsvorschläge**: Automatische Beschreibung per KI generieren lassen (nutzt den in HA konfigurierten Conversation Agent)
 - **44 vordefinierte Vorlagen**: Deutsche Aufgabenvorlagen für Heizung, Sicherheit, Sanitär, Geräte, Außen (inkl. Pool), Innen, Elektrik (inkl. Photovoltaik), Garten, Reinigung
@@ -76,7 +76,7 @@ Eine umfassende HACS Custom Integration zur Planung und Verwaltung von Haushalts
 
 Nach der Installation erscheint "Wartungsplaner" in der Seitenleiste mit drei Tabs:
 
-- **Übersicht**: Statistik-Karten und dringende Aufgaben
+- **Übersicht**: Statistik-Karten und dringende Aufgaben mit Erledigen- und Aufschieben-Buttons
 - **Aufgaben**: Filterbare Aufgabenliste mit Such- und Filterfunktion
 - **Vorlagen**: Vordefinierte und eigene Aufgabenvorlagen zum schnellen Hinzufügen
 
@@ -94,7 +94,7 @@ Beim Erstellen oder Bearbeiten einer Aufgabe stehen folgende Felder zur Verfügu
 | Kategorie | Eingebaute oder eigene Kategorie |
 | Priorität | Niedrig, Mittel, Hoch, Kritisch |
 | Intervall | Wiederholungsintervall (Tage/Wochen/Monate/Jahre) |
-| Zuletzt erledigt | Datum der letzten Erledigung (leer = heute) |
+| Zuletzt erledigt | Datum der letzten Erledigung (leer = Status "Nie erledigt") |
 
 ### Eigene Kategorien
 
