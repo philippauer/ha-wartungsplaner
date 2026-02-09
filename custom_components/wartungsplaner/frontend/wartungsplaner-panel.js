@@ -73,6 +73,14 @@ const STRINGS = {
     conversationAgent: "KI-Assistent (Conversation Agent)",
     conversationAgentHint: "Für die KI-Beschreibungsvorschläge",
     noAgentSelected: "Standard (HA-Standard)",
+    snooze: "Aufschieben",
+    snoozeTask: "Aufgabe aufschieben",
+    snoozeOptions: "Wie lange aufschieben?",
+    snooze1Day: "1 Tag",
+    snooze3Days: "3 Tage",
+    snooze1Week: "1 Woche",
+    snooze2Weeks: "2 Wochen",
+    snooze1Month: "1 Monat",
     priorities: {
       low: "Niedrig",
       medium: "Mittel",
@@ -156,6 +164,14 @@ const STRINGS = {
     conversationAgent: "AI Assistant (Conversation Agent)",
     conversationAgentHint: "For AI description suggestions",
     noAgentSelected: "Default (HA default)",
+    snooze: "Snooze",
+    snoozeTask: "Snooze Task",
+    snoozeOptions: "How long to snooze?",
+    snooze1Day: "1 Day",
+    snooze3Days: "3 Days",
+    snooze1Week: "1 Week",
+    snooze2Weeks: "2 Weeks",
+    snooze1Month: "1 Month",
     priorities: {
       low: "Low",
       medium: "Medium",
@@ -361,7 +377,7 @@ class WartungsplanerPanel extends HTMLElement {
         ${
           urgent.length === 0
             ? `<div class="empty-state"><ha-icon icon="mdi:check-all"></ha-icon><p>${t.noUrgent}</p></div>`
-            : `<div class="task-list">${urgent.map((task) => this._renderTaskCard(task)).join("")}</div>`
+            : `<div class="task-list">${urgent.map((task) => this._renderTaskCard(task, "overview")).join("")}</div>`
         }
       </div>
     `;
@@ -443,7 +459,7 @@ class WartungsplanerPanel extends HTMLElement {
     `;
   }
 
-  _renderTaskCard(task) {
+  _renderTaskCard(task, context = "tasks") {
     const t = this.t;
     const statusColor = STATUS_COLORS[task.status] || "#9e9e9e";
     const priorityColor = PRIORITY_COLORS[task.priority] || "#2196f3";
@@ -481,6 +497,14 @@ class WartungsplanerPanel extends HTMLElement {
             <span><ha-icon icon="mdi:refresh"></ha-icon> ${task.interval_value} ${t[task.interval_unit] || task.interval_unit}</span>
           </div>
           <div class="task-actions">
+            ${context === "overview" ? `
+            <button class="btn btn-small btn-success complete-btn" data-task-id="${task.id}" title="${t.completeTask}">
+              <ha-icon icon="mdi:check"></ha-icon>
+            </button>
+            <button class="btn btn-small snooze-btn" data-task-id="${task.id}" title="${t.snooze}">
+              <ha-icon icon="mdi:clock-plus-outline"></ha-icon>
+            </button>
+            ` : `
             <button class="btn btn-small save-template-btn" data-task-id="${task.id}" title="${t.saveAsTemplate}">
               <ha-icon icon="mdi:content-save-outline"></ha-icon>
             </button>
@@ -493,6 +517,7 @@ class WartungsplanerPanel extends HTMLElement {
             <button class="btn btn-small btn-danger delete-btn" data-task-id="${task.id}" title="${t.deleteTask}">
               <ha-icon icon="mdi:delete"></ha-icon>
             </button>
+            `}
           </div>
         </div>
       </div>
@@ -645,6 +670,13 @@ class WartungsplanerPanel extends HTMLElement {
       });
     });
 
+    root.querySelectorAll(".snooze-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this._showSnoozeDialog(btn.dataset.taskId);
+      });
+    });
+
     root.querySelectorAll(".save-template-btn").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -747,7 +779,7 @@ class WartungsplanerPanel extends HTMLElement {
             </div>
           </div>
           <div class="form-group">
-            <label>${t.lastCompleted} <span class="hint">(${t.leaveBlankToday})</span></label>
+            <label>${t.lastCompleted}</label>
             <input type="date" id="taskLastCompleted" value="${lastCompletedValue}" />
           </div>
           <div class="dialog-actions">
@@ -811,8 +843,7 @@ class WartungsplanerPanel extends HTMLElement {
       const name = dialog.querySelector("#taskName").value.trim();
       if (!name) return;
 
-      const lastCompletedInput = dialog.querySelector("#taskLastCompleted").value;
-      const lastCompleted = lastCompletedInput || new Date().toISOString().split("T")[0];
+      const lastCompleted = dialog.querySelector("#taskLastCompleted").value;
 
       const data = {
         name,
@@ -822,8 +853,10 @@ class WartungsplanerPanel extends HTMLElement {
         priority: dialog.querySelector("#taskPriority").value,
         interval_value: parseInt(dialog.querySelector("#taskIntervalValue").value, 10),
         interval_unit: dialog.querySelector("#taskIntervalUnit").value,
-        last_completed: lastCompleted,
       };
+      if (lastCompleted) {
+        data.last_completed = lastCompleted;
+      }
 
       try {
         if (isEdit) {
@@ -926,6 +959,64 @@ class WartungsplanerPanel extends HTMLElement {
       } catch (e) {
         console.error("Wartungsplaner: Failed to delete task", e);
       }
+    });
+  }
+
+  _showSnoozeDialog(taskId) {
+    const t = this.t;
+    const dialog = document.createElement("div");
+    const options = [
+      { days: 1, label: t.snooze1Day },
+      { days: 3, label: t.snooze3Days },
+      { days: 7, label: t.snooze1Week },
+      { days: 14, label: t.snooze2Weeks },
+      { days: 30, label: t.snooze1Month },
+    ];
+
+    dialog.innerHTML = `
+      <div class="dialog-overlay">
+        <div class="dialog dialog-small">
+          <h2>${t.snoozeTask}</h2>
+          <p>${t.snoozeOptions}</p>
+          <div class="snooze-options">
+            ${options.map((opt) => `
+              <button class="btn snooze-option-btn" data-days="${opt.days}">
+                <ha-icon icon="mdi:clock-plus-outline"></ha-icon> ${opt.label}
+              </button>
+            `).join("")}
+          </div>
+          <div class="dialog-actions">
+            <button class="btn" id="dialogCancel">${t.cancel}</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    this.shadowRoot.appendChild(dialog);
+
+    dialog.querySelector("#dialogCancel").addEventListener("click", () => dialog.remove());
+    dialog.querySelector(".dialog-overlay").addEventListener("click", (e) => {
+      if (e.target.classList.contains("dialog-overlay")) dialog.remove();
+    });
+
+    dialog.querySelectorAll(".snooze-option-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const days = parseInt(btn.dataset.days, 10);
+        const until = new Date();
+        until.setDate(until.getDate() + days);
+        const untilDate = until.toISOString().split("T")[0];
+        try {
+          await this._hass.callWS({
+            type: "wartungsplaner/snooze_task",
+            task_id: taskId,
+            until_date: untilDate,
+          });
+          dialog.remove();
+          await this._loadData();
+        } catch (e) {
+          console.error("Wartungsplaner: Failed to snooze task", e);
+        }
+      });
     });
   }
 
@@ -1479,6 +1570,28 @@ class WartungsplanerPanel extends HTMLElement {
 
       .btn-small ha-icon {
         --mdc-icon-size: 16px;
+      }
+
+      .snooze-btn {
+        background: #ff9800;
+        color: white;
+        border-color: #ff9800;
+      }
+
+      .snooze-btn:hover {
+        opacity: 0.9;
+        background: #ff9800;
+      }
+
+      .snooze-options {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .snooze-option-btn {
+        justify-content: flex-start;
+        width: 100%;
       }
 
       /* Toolbar */
