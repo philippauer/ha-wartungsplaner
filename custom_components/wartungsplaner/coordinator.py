@@ -48,6 +48,14 @@ class WartungsplanerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def _compute_task_status(self, task: dict[str, Any]) -> str:
         """Compute the current status of a task."""
         today = date.today()
+
+        # Check if task is snoozed
+        snoozed_until_str = task.get("snoozed_until")
+        if snoozed_until_str:
+            snoozed_until = date.fromisoformat(snoozed_until_str)
+            if snoozed_until > today:
+                return TaskStatus.SNOOZED
+
         next_due_str = task.get("next_due")
 
         if next_due_str is None:
@@ -83,6 +91,7 @@ class WartungsplanerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "due": 0,
             "done": 0,
             "never_done": 0,
+            "snoozed": 0,
         }
 
         for task_id, task in tasks.items():
@@ -106,6 +115,8 @@ class WartungsplanerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 stats["done"] += 1
             elif status == TaskStatus.NEVER_DONE:
                 stats["never_done"] += 1
+            elif status == TaskStatus.SNOOZED:
+                stats["snoozed"] += 1
 
             # Fire events on status transitions
             prev_status = self._previous_statuses.get(task_id)

@@ -93,6 +93,7 @@ const STRINGS = {
       due: "Fällig",
       overdue: "Überfällig",
       never_done: "Nie erledigt",
+      snoozed: "Aufgeschoben",
     },
   },
   en: {
@@ -184,6 +185,7 @@ const STRINGS = {
       due: "Due",
       overdue: "Overdue",
       never_done: "Never Done",
+      snoozed: "Snoozed",
     },
   },
 };
@@ -194,6 +196,7 @@ const STATUS_COLORS = {
   due: "#f44336",
   overdue: "#b71c1c",
   never_done: "#9e9e9e",
+  snoozed: "#2196f3",
 };
 
 const PRIORITY_COLORS = {

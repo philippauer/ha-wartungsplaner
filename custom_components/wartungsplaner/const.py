@@ -90,6 +90,7 @@ class TaskStatus(StrEnum):
     DUE = "due"
     OVERDUE = "overdue"
     NEVER_DONE = "never_done"
+    SNOOZED = "snoozed"
 
 
 CATEGORY_ICONS = {
@@ -112,4 +113,5 @@ STATUS_LABELS = {
     TaskStatus.DUE: {"de": "Fällig", "en": "Due"},
     TaskStatus.OVERDUE: {"de": "Überfällig", "en": "Overdue"},
     TaskStatus.NEVER_DONE: {"de": "Nie erledigt", "en": "Never done"},
+    TaskStatus.SNOOZED: {"de": "Aufgeschoben", "en": "Snoozed"},
 }
