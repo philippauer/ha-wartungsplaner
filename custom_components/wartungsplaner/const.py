@@ -3,7 +3,7 @@
 from enum import StrEnum
 
 DOMAIN = "wartungsplaner"
-VERSION = "1.5.3"
+VERSION = "1.6.0"
 
 # Storage
 STORAGE_KEY = "wartungsplaner.tasks"
@@ -26,6 +26,8 @@ EVENT_TASK_OVERDUE = "wartungsplaner_task_overdue"
 
 # Platforms
 PLATFORMS = ["sensor", "binary_sensor", "calendar"]
+
+CARD_URL_PATH = "/wartungsplaner_panel/wartungsplaner-card.js"
 
 
 class TaskCategory(StrEnum):

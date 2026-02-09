@@ -13,6 +13,7 @@ from homeassistant.components.frontend import async_register_built_in_panel
 from homeassistant.components.http import StaticPathConfig
 
 from .const import (
+    CARD_URL_PATH,
     DOMAIN,
     PLATFORMS,
     VERSION,
@@ -100,6 +101,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Register frontend panel
     await _async_register_panel(hass)
 
+    # Register Lovelace card resource
+    await _async_register_card_resource(hass)
+
     # Forward entry setup to platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
@@ -141,6 +145,60 @@ async def _async_register_panel(hass: HomeAssistant) -> None:
         },
         require_admin=False,
     )
+
+
+async def _async_register_card_resource(hass: HomeAssistant) -> None:
+    """Register the Lovelace card as a resource (storage mode only)."""
+    try:
+        lovelace = hass.data.get("lovelace")
+        if lovelace is None:
+            return
+
+        # Only works in storage mode (mode == "storage")
+        mode = lovelace.get("mode") if isinstance(lovelace, dict) else getattr(lovelace, "mode", None)
+        if mode != "storage":
+            return
+
+        # Get the resource collection
+        resources = None
+        if isinstance(lovelace, dict):
+            resources = lovelace.get("resources")
+        else:
+            resources = getattr(lovelace, "resources", None)
+
+        if resources is None:
+            return
+
+        card_url = f"{CARD_URL_PATH}?v={VERSION}"
+
+        # Check existing resources
+        existing = None
+        if hasattr(resources, "async_items"):
+            for item in resources.async_items():
+                url = item.get("url", "")
+                if CARD_URL_PATH in url:
+                    existing = item
+                    break
+
+        if existing:
+            # Update version if changed
+            if existing.get("url") != card_url:
+                await resources.async_update_item(
+                    existing["id"], {"url": card_url}
+                )
+                _LOGGER.debug("Updated Wartungsplaner card resource to %s", card_url)
+        else:
+            # Create new resource
+            await resources.async_create_item(
+                {"res_type": "module", "url": card_url}
+            )
+            _LOGGER.debug("Registered Wartungsplaner card resource: %s", card_url)
+
+    except Exception:
+        _LOGGER.debug(
+            "Could not auto-register Lovelace card resource. "
+            "YAML mode users need to add it manually."
+        )
 
 
 async def _async_register_services(
