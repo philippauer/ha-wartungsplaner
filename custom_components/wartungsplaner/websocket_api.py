@@ -560,7 +560,30 @@ async def ws_suggest_description(
             blocking=True,
             return_response=True,
         )
-        speech = result["response"]["speech"]["plain"]["speech"]
+        response_data = result.get("response", {})
+
+        # Check if the conversation agent returned an error intent
+        intent_type = response_data.get("data", {}).get("code")
+        if intent_type == "no_intent_match":
+            connection.send_error(
+                msg["id"],
+                "no_ai_agent",
+                "No AI conversation agent configured",
+            )
+            return
+
+        speech = response_data["speech"]["plain"]["speech"]
+
+        # Sanity check: if the response is very short or contains prompt
+        # fragments, the default (non-AI) agent likely handled it
+        if len(speech) < 20 or "existiert nicht" in speech.lower():
+            connection.send_error(
+                msg["id"],
+                "no_ai_agent",
+                "No AI conversation agent configured",
+            )
+            return
+
         connection.send_result(msg["id"], {"description": speech})
     except Exception:
         _LOGGER.exception("Failed to get AI description suggestion")

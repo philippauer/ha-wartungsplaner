@@ -65,7 +65,9 @@ const STRINGS = {
     restoreTemplates: "Wiederherstellen",
     suggestDescription: "Beschreibung vorschlagen",
     suggestLoading: "Generiere...",
-    suggestError: "Beschreibung konnte nicht generiert werden. Ist ein KI-Assistent in HA konfiguriert?",
+    suggestError: "Beschreibung konnte nicht generiert werden.",
+    suggestNoAgent: "Kein KI-Assistent konfiguriert. Bitte unter Einstellungen \u2192 Sprachassistenten einen KI-basierten Conversation Agent (z.B. OpenAI, Google AI, Ollama) einrichten.",
+    suggestHint: "Nutzt den in HA konfigurierten KI-Assistenten (Einstellungen \u2192 Sprachassistenten)",
     priorities: {
       low: "Niedrig",
       medium: "Mittel",
@@ -141,7 +143,9 @@ const STRINGS = {
     restoreTemplates: "Restore",
     suggestDescription: "Suggest description",
     suggestLoading: "Generating...",
-    suggestError: "Could not generate description. Is an AI assistant configured in HA?",
+    suggestError: "Could not generate description.",
+    suggestNoAgent: "No AI assistant configured. Please set up an AI-based conversation agent (e.g. OpenAI, Google AI, Ollama) under Settings \u2192 Voice Assistants.",
+    suggestHint: "Uses the AI assistant configured in HA (Settings \u2192 Voice Assistants)",
     priorities: {
       low: "Low",
       medium: "Medium",
@@ -684,9 +688,14 @@ class WartungsplanerPanel extends HTMLElement {
           <div class="form-group">
             <label>${t.description}</label>
             <textarea id="taskDesc" rows="3">${isEdit ? this._escapeHtml(task.description || "") : ""}</textarea>
-            <button class="btn btn-small btn-ai-suggest" id="suggestDescBtn" type="button" disabled>
-              <ha-icon icon="mdi:auto-fix"></ha-icon> ${t.suggestDescription}
-            </button>
+            <div class="ai-suggest-row">
+              <button class="btn btn-small btn-ai-suggest" id="suggestDescBtn" type="button" disabled>
+                <ha-icon icon="mdi:auto-fix"></ha-icon> ${t.suggestDescription}
+              </button>
+              <span class="ai-hint" title="${t.suggestHint}">
+                <ha-icon icon="mdi:help-circle-outline"></ha-icon>
+              </span>
+            </div>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -763,7 +772,12 @@ class WartungsplanerPanel extends HTMLElement {
         dialog.querySelector("#taskDesc").value = result.description;
       } catch (e) {
         console.error("Wartungsplaner: AI suggest failed", e);
-        this._showToast(t.suggestError);
+        const errorCode = e && e.code;
+        if (errorCode === "no_ai_agent") {
+          this._showToast(t.suggestNoAgent);
+        } else {
+          this._showToast(t.suggestError);
+        }
       } finally {
         suggestBtn.innerHTML = originalText;
         updateSuggestBtn();
@@ -1674,8 +1688,23 @@ class WartungsplanerPanel extends HTMLElement {
         resize: vertical;
       }
 
-      .btn-ai-suggest {
+      .ai-suggest-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
         margin-top: 6px;
+      }
+
+      .ai-hint {
+        color: var(--wp-text-secondary);
+        cursor: help;
+      }
+
+      .ai-hint ha-icon {
+        --mdc-icon-size: 18px;
+      }
+
+      .btn-ai-suggest {
         border: 1px solid var(--wp-primary);
         color: var(--wp-primary);
         background: transparent;
