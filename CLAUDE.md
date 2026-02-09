@@ -57,6 +57,8 @@ Store (JSON persistence via .storage/wartungsplaner.tasks)
 - No build step, test suite, or linter configured. The frontend JS is served directly.
 - Python syntax check: `python3 -c "import ast; ast.parse(open('file.py').read())"`
 - JS syntax check: `node -e "new (require('vm').Script)(require('fs').readFileSync('file.js','utf8'))"`
-- Version lives in `manifest.json` (`"version": "x.y.z"`).
+- Version lives in **two places** — both must be updated for a release:
+  1. `manifest.json` (`"version": "x.y.z"`)
+  2. `const.py` (`VERSION = "x.y.z"`) — used as cache-busting query param for the panel JS URL
 - Releases are created via `gh release create vX.Y.Z` with German changelog.
 - The integration is single-instance only (`async_set_unique_id(DOMAIN)` in config flow).
