@@ -560,11 +560,19 @@ async def ws_suggest_description(
             blocking=True,
             return_response=True,
         )
+        _LOGGER.debug("Conversation result: %s", result)
+
         response_data = result.get("response", {})
 
         # Check if the conversation agent returned an error intent
-        intent_type = response_data.get("data", {}).get("code")
-        if intent_type == "no_intent_match":
+        response_type = response_data.get("response_type")
+        intent_code = response_data.get("data", {}).get("code")
+        if response_type == "error" or intent_code == "no_intent_match":
+            _LOGGER.warning(
+                "Conversation agent returned error: type=%s, code=%s",
+                response_type,
+                intent_code,
+            )
             connection.send_error(
                 msg["id"],
                 "no_ai_agent",
@@ -572,11 +580,9 @@ async def ws_suggest_description(
             )
             return
 
-        speech = response_data["speech"]["plain"]["speech"]
+        speech = response_data.get("speech", {}).get("plain", {}).get("speech", "")
 
-        # Sanity check: if the response is very short or contains prompt
-        # fragments, the default (non-AI) agent likely handled it
-        if len(speech) < 20 or "existiert nicht" in speech.lower():
+        if not speech or len(speech) < 20:
             connection.send_error(
                 msg["id"],
                 "no_ai_agent",
