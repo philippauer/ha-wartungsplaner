@@ -75,6 +75,7 @@ def ws_get_tasks(
         vol.Required("type"): "wartungsplaner/add_task",
         vol.Required("name"): str,
         vol.Optional("description", default=""): str,
+        vol.Optional("manufacturer", default=""): str,
         vol.Optional("category", default="other"): str,
         vol.Optional("priority", default="medium"): vol.In(
             [e.value for e in TaskPriority]
@@ -101,6 +102,7 @@ async def ws_add_task(
     task_data = {
         "name": msg["name"],
         "description": msg.get("description", ""),
+        "manufacturer": msg.get("manufacturer", ""),
         "category": msg.get("category", "other"),
         "priority": msg.get("priority", "medium"),
         "interval_value": msg.get("interval_value", 1),
@@ -109,7 +111,7 @@ async def ws_add_task(
     }
 
     task = await store.async_add_task(task_data)
-    await coordinator.async_request_refresh()
+    await coordinator.async_refresh()
     connection.send_result(msg["id"], {"task": task})
 
 
@@ -119,6 +121,7 @@ async def ws_add_task(
         vol.Required("task_id"): str,
         vol.Optional("name"): str,
         vol.Optional("description"): str,
+        vol.Optional("manufacturer"): str,
         vol.Optional("category"): str,
         vol.Optional("priority"): vol.In([e.value for e in TaskPriority]),
         vol.Optional("interval_value"): vol.All(
@@ -152,7 +155,7 @@ async def ws_update_task(
         connection.send_error(msg["id"], "not_found", "Task not found")
         return
 
-    await coordinator.async_request_refresh()
+    await coordinator.async_refresh()
     connection.send_result(msg["id"], {"task": task})
 
 
@@ -177,7 +180,7 @@ async def ws_delete_task(
         connection.send_error(msg["id"], "not_found", "Task not found")
         return
 
-    await coordinator.async_request_refresh()
+    await coordinator.async_refresh()
     connection.send_result(msg["id"], {"success": True})
 
 
@@ -203,7 +206,7 @@ async def ws_complete_task(
         connection.send_error(msg["id"], "not_found", "Task not found")
         return
 
-    await coordinator.async_request_refresh()
+    await coordinator.async_refresh()
     connection.send_result(msg["id"], {"task": task})
 
 
@@ -263,7 +266,7 @@ async def ws_add_from_template(
     }
 
     task = await store.async_add_task(task_data)
-    await coordinator.async_request_refresh()
+    await coordinator.async_refresh()
     connection.send_result(msg["id"], {"task": task})
 
 
@@ -289,7 +292,7 @@ async def ws_snooze_task(
         connection.send_error(msg["id"], "not_found", "Task not found")
         return
 
-    await coordinator.async_request_refresh()
+    await coordinator.async_refresh()
     connection.send_result(msg["id"], {"task": task})
 
 
@@ -500,7 +503,7 @@ async def ws_update_settings(
 
     data = {k: v for k, v in msg.items() if k not in ("id", "type")}
     settings = await store.async_update_settings(data)
-    await coordinator.async_request_refresh()
+    await coordinator.async_refresh()
     connection.send_result(msg["id"], {"settings": settings})
 
 
@@ -512,6 +515,7 @@ async def ws_update_settings(
         vol.Required("type"): "wartungsplaner/suggest_description",
         vol.Required("task_name"): str,
         vol.Optional("category"): str,
+        vol.Optional("manufacturer"): str,
         vol.Optional("language", default="de"): vol.In(["de", "en"]),
     }
 )
@@ -525,6 +529,7 @@ async def ws_suggest_description(
     task_name = msg["task_name"]
     language = msg.get("language", "de")
     category_id = msg.get("category")
+    manufacturer = msg.get("manufacturer", "")
 
     # Resolve category label for the prompt
     category_label = ""
@@ -541,6 +546,8 @@ async def ws_suggest_description(
             f"Schreibe genau einen Satz als Beschreibung für die "
             f"Hauswartungsaufgabe '{task_name}'"
         )
+        if manufacturer:
+            prompt += f" (Hersteller: {manufacturer})"
         if category_label:
             prompt += f" (Kategorie: {category_label})"
         prompt += (
@@ -555,6 +562,8 @@ async def ws_suggest_description(
             f"Write exactly one sentence as a description for the "
             f"household maintenance task '{task_name}'"
         )
+        if manufacturer:
+            prompt += f" (manufacturer: {manufacturer})"
         if category_label:
             prompt += f" (category: {category_label})"
         prompt += (

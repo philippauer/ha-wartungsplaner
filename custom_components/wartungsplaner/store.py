@@ -120,6 +120,7 @@ class WartungsplanerStore:
             "id": task_id,
             "name": task_data["name"],
             "description": task_data.get("description", ""),
+            "manufacturer": task_data.get("manufacturer", ""),
             "category": task_data.get("category", "other"),
             "priority": task_data.get("priority", "medium"),
             "interval_value": task_data.get("interval_value", 1),
@@ -157,6 +158,7 @@ class WartungsplanerStore:
         for key in (
             "name",
             "description",
+            "manufacturer",
             "category",
             "priority",
             "interval_value",

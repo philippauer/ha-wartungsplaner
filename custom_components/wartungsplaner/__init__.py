@@ -155,13 +155,13 @@ async def _async_register_services(
         notes = call.data.get("notes", "")
         result = await store.async_complete_task(task_id, notes)
         if result:
-            await coordinator.async_request_refresh()
+            await coordinator.async_refresh()
 
     async def handle_add_task(call: ServiceCall) -> None:
         """Handle the add_task service call."""
         task_data: dict[str, Any] = dict(call.data)
         await store.async_add_task(task_data)
-        await coordinator.async_request_refresh()
+        await coordinator.async_refresh()
 
     async def handle_update_task(call: ServiceCall) -> None:
         """Handle the update_task service call."""
@@ -171,14 +171,14 @@ async def _async_register_services(
         }
         result = await store.async_update_task(task_id, task_data)
         if result:
-            await coordinator.async_request_refresh()
+            await coordinator.async_refresh()
 
     async def handle_delete_task(call: ServiceCall) -> None:
         """Handle the delete_task service call."""
         task_id = call.data["task_id"]
         result = await store.async_delete_task(task_id)
         if result:
-            await coordinator.async_request_refresh()
+            await coordinator.async_refresh()
 
     async def handle_snooze_task(call: ServiceCall) -> None:
         """Handle the snooze_task service call."""
@@ -186,7 +186,7 @@ async def _async_register_services(
         until_date = call.data["until_date"]
         result = await store.async_snooze_task(task_id, until_date)
         if result:
-            await coordinator.async_request_refresh()
+            await coordinator.async_refresh()
 
     hass.services.async_register(
         DOMAIN, SERVICE_COMPLETE_TASK, handle_complete_task, SERVICE_COMPLETE_SCHEMA

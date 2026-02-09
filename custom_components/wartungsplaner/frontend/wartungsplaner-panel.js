@@ -68,6 +68,8 @@ const STRINGS = {
     suggestError: "Beschreibung konnte nicht generiert werden.",
     suggestNoAgent: "Kein KI-Assistent konfiguriert. Bitte unter Einstellungen \u2192 Sprachassistenten einen KI-basierten Conversation Agent (z.B. OpenAI, Google AI, Ollama) einrichten.",
     suggestHint: "Nutzt den in HA konfigurierten KI-Assistenten (Einstellungen \u2192 Sprachassistenten)",
+    manufacturer: "Hersteller",
+    manufacturerHint: "Optional, z.B. Bosch, Viessmann",
     conversationAgent: "KI-Assistent (Conversation Agent)",
     conversationAgentHint: "Für die KI-Beschreibungsvorschläge",
     noAgentSelected: "Standard (HA-Standard)",
@@ -149,6 +151,8 @@ const STRINGS = {
     suggestError: "Could not generate description.",
     suggestNoAgent: "No AI assistant configured. Please set up an AI-based conversation agent (e.g. OpenAI, Google AI, Ollama) under Settings \u2192 Voice Assistants.",
     suggestHint: "Uses the AI assistant configured in HA (Settings \u2192 Voice Assistants)",
+    manufacturer: "Manufacturer",
+    manufacturerHint: "Optional, e.g. Bosch, Viessmann",
     conversationAgent: "AI Assistant (Conversation Agent)",
     conversationAgentHint: "For AI description suggestions",
     noAgentSelected: "Default (HA default)",
@@ -378,7 +382,8 @@ class WartungsplanerPanel extends HTMLElement {
       tasks = tasks.filter(
         (task) =>
           task.name.toLowerCase().includes(q) ||
-          (task.description && task.description.toLowerCase().includes(q))
+          (task.description && task.description.toLowerCase().includes(q)) ||
+          (task.manufacturer && task.manufacturer.toLowerCase().includes(q))
       );
     }
 
@@ -462,7 +467,7 @@ class WartungsplanerPanel extends HTMLElement {
           <div class="task-header">
             <div class="task-title-row">
               <ha-icon icon="${categoryIcon}" style="color: var(--secondary-text-color);"></ha-icon>
-              <span class="task-name">${this._escapeHtml(task.name)}</span>
+              <span class="task-name">${this._escapeHtml(task.name)}${task.manufacturer ? ' (' + this._escapeHtml(task.manufacturer) + ')' : ''}</span>
             </div>
             <div class="task-badges">
               <span class="badge" style="background-color: ${statusColor}; color: white;">${statusLabel}</span>
@@ -692,6 +697,10 @@ class WartungsplanerPanel extends HTMLElement {
             <input type="text" id="taskName" value="${isEdit ? this._escapeHtml(task.name) : ""}" />
           </div>
           <div class="form-group">
+            <label>${t.manufacturer} <span class="hint">(${t.manufacturerHint})</span></label>
+            <input type="text" id="taskManufacturer" value="${isEdit ? this._escapeHtml(task.manufacturer || '') : ''}" />
+          </div>
+          <div class="form-group">
             <label>${t.description}</label>
             <textarea id="taskDesc" rows="3">${isEdit ? this._escapeHtml(task.description || "") : ""}</textarea>
             <div class="ai-suggest-row">
@@ -769,12 +778,15 @@ class WartungsplanerPanel extends HTMLElement {
       suggestBtn.innerHTML = `<span class="ai-spinner"></span> ${t.suggestLoading}`;
 
       try {
-        const result = await this._hass.callWS({
+        const wsData = {
           type: "wartungsplaner/suggest_description",
           task_name: taskName,
           category: dialog.querySelector("#taskCategory").value,
           language: this._lang,
-        });
+        };
+        const mfr = dialog.querySelector("#taskManufacturer").value.trim();
+        if (mfr) wsData.manufacturer = mfr;
+        const result = await this._hass.callWS(wsData);
         dialog.querySelector("#taskDesc").value = result.description;
       } catch (e) {
         console.error("Wartungsplaner: AI suggest failed", e);
@@ -805,6 +817,7 @@ class WartungsplanerPanel extends HTMLElement {
       const data = {
         name,
         description: dialog.querySelector("#taskDesc").value.trim(),
+        manufacturer: dialog.querySelector("#taskManufacturer").value.trim(),
         category: dialog.querySelector("#taskCategory").value,
         priority: dialog.querySelector("#taskPriority").value,
         interval_value: parseInt(dialog.querySelector("#taskIntervalValue").value, 10),
