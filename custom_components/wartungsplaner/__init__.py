@@ -15,6 +15,7 @@ from homeassistant.components.http import StaticPathConfig
 from .const import (
     DOMAIN,
     PLATFORMS,
+    VERSION,
 )
 from .coordinator import WartungsplanerCoordinator
 from .store import WartungsplanerStore
@@ -135,7 +136,7 @@ async def _async_register_panel(hass: HomeAssistant) -> None:
         config={
             "_panel_custom": {
                 "name": "wartungsplaner-panel",
-                "module_url": f"{panel_url}/wartungsplaner-panel.js",
+                "module_url": f"{panel_url}/wartungsplaner-panel.js?v={VERSION}",
             }
         },
         require_admin=False,

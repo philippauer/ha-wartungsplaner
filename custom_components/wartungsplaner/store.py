@@ -25,27 +25,28 @@ def _calculate_next_due(
     snoozed_until: str | None = None,
 ) -> str | None:
     """Calculate the next due date based on last completion and interval."""
-    if last_completed is None:
-        return None
+    next_due = None
 
-    base_date = date.fromisoformat(last_completed)
+    if last_completed is not None:
+        base_date = date.fromisoformat(last_completed)
 
-    if interval_unit == IntervalUnit.DAYS:
-        next_due = base_date + relativedelta(days=interval_value)
-    elif interval_unit == IntervalUnit.WEEKS:
-        next_due = base_date + relativedelta(weeks=interval_value)
-    elif interval_unit == IntervalUnit.MONTHS:
-        next_due = base_date + relativedelta(months=interval_value)
-    elif interval_unit == IntervalUnit.YEARS:
-        next_due = base_date + relativedelta(years=interval_value)
-    else:
-        return None
+        if interval_unit == IntervalUnit.DAYS:
+            next_due = base_date + relativedelta(days=interval_value)
+        elif interval_unit == IntervalUnit.WEEKS:
+            next_due = base_date + relativedelta(weeks=interval_value)
+        elif interval_unit == IntervalUnit.MONTHS:
+            next_due = base_date + relativedelta(months=interval_value)
+        elif interval_unit == IntervalUnit.YEARS:
+            next_due = base_date + relativedelta(years=interval_value)
 
-    # If snoozed, use snooze date if it's later
+    # If snoozed, use snooze date if it's later (or if next_due is None)
     if snoozed_until:
         snooze_date = date.fromisoformat(snoozed_until)
-        if snooze_date > next_due:
+        if next_due is None or snooze_date > next_due:
             next_due = snooze_date
+
+    if next_due is None:
+        return None
 
     return next_due.isoformat()
 
