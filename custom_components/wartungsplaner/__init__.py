@@ -11,6 +11,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
 from homeassistant.components.frontend import async_register_built_in_panel
 from homeassistant.components.http import StaticPathConfig
+from homeassistant.helpers.event import async_call_later
 
 from .const import (
     CARD_URL_PATH,
@@ -154,45 +155,40 @@ async def _async_register_card_resource(hass: HomeAssistant) -> None:
         if lovelace is None:
             return
 
-        # Only works in storage mode (mode == "storage")
-        mode = lovelace.get("mode") if isinstance(lovelace, dict) else getattr(lovelace, "mode", None)
-        if mode != "storage":
+        if lovelace.mode != "storage":
             return
 
-        # Get the resource collection
-        resources = None
-        if isinstance(lovelace, dict):
-            resources = lovelace.get("resources")
-        else:
-            resources = getattr(lovelace, "resources", None)
+        resources = lovelace.resources
 
-        if resources is None:
-            return
+        async def _register_when_loaded(_now: Any) -> None:
+            """Register once resources are loaded."""
+            if not resources.loaded:
+                async_call_later(hass, 5, _register_when_loaded)
+                return
 
-        card_url = f"{CARD_URL_PATH}?v={VERSION}"
+            card_url = f"{CARD_URL_PATH}?v={VERSION}"
 
-        # Check existing resources
-        existing = None
-        if hasattr(resources, "async_items"):
+            existing = None
             for item in resources.async_items():
                 url = item.get("url", "")
-                if CARD_URL_PATH in url:
+                if CARD_URL_PATH in url.split("?")[0]:
                     existing = item
                     break
 
-        if existing:
-            # Update version if changed
-            if existing.get("url") != card_url:
-                await resources.async_update_item(
-                    existing["id"], {"url": card_url}
+            if existing:
+                if existing.get("url") != card_url:
+                    await resources.async_update_item(
+                        existing["id"],
+                        {"res_type": "module", "url": card_url},
+                    )
+                    _LOGGER.debug("Updated Wartungsplaner card resource to %s", card_url)
+            else:
+                await resources.async_create_item(
+                    {"res_type": "module", "url": card_url}
                 )
-                _LOGGER.debug("Updated Wartungsplaner card resource to %s", card_url)
-        else:
-            # Create new resource
-            await resources.async_create_item(
-                {"res_type": "module", "url": card_url}
-            )
-            _LOGGER.debug("Registered Wartungsplaner card resource: %s", card_url)
+                _LOGGER.debug("Registered Wartungsplaner card resource: %s", card_url)
+
+        await _register_when_loaded(0)
 
     except Exception:
         _LOGGER.debug(
