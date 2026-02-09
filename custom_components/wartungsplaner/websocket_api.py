@@ -538,20 +538,32 @@ async def ws_suggest_description(
 
     if language == "de":
         prompt = (
-            f"Erstelle eine kurze, praktische Beschreibung (2-3 Sätze) für die "
+            f"Schreibe genau einen Satz als Beschreibung für die "
             f"Hauswartungsaufgabe '{task_name}'"
         )
         if category_label:
-            prompt += f" in der Kategorie '{category_label}'"
-        prompt += ". Beschreibe konkret was zu tun ist. Antworte nur mit der Beschreibung."
+            prompt += f" (Kategorie: {category_label})"
+        prompt += (
+            ". Stil: sachlich, konkrete Tätigkeiten mit Komma aufzählen, "
+            "keine Einleitung, kein Schlusssatz. "
+            "Beispiel: 'Alle Heizkörper entlüften, um Luftblasen zu entfernen "
+            "und gleichmäßige Wärmeverteilung sicherzustellen'. "
+            "Antworte nur mit dem einen Satz."
+        )
     else:
         prompt = (
-            f"Create a short, practical description (2-3 sentences) for the "
+            f"Write exactly one sentence as a description for the "
             f"household maintenance task '{task_name}'"
         )
         if category_label:
-            prompt += f" in the category '{category_label}'"
-        prompt += ". Describe specifically what needs to be done. Reply only with the description."
+            prompt += f" (category: {category_label})"
+        prompt += (
+            ". Style: factual, list specific actions separated by commas, "
+            "no introduction, no closing sentence. "
+            "Example: 'Check all fire extinguishers for pressure, expiry date "
+            "and accessibility'. "
+            "Reply only with the one sentence."
+        )
 
     # Use configured agent or fall back to default
     store = _get_store(hass)
