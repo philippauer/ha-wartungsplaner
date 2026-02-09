@@ -15,6 +15,8 @@ Eine umfassende HACS Custom Integration zur Planung und Verwaltung von Haushalts
 ## Features
 
 - **Aufgabenverwaltung**: Erstellen, bearbeiten, erledigen und löschen von Wartungsaufgaben
+- **Hersteller-Feld**: Optionale Herstellerangabe pro Aufgabe (z.B. Bosch, Viessmann) – wird in Klammern hinter dem Aufgabennamen angezeigt
+- **KI-Beschreibungsvorschläge**: Automatische Beschreibung per KI generieren lassen (nutzt den in HA konfigurierten Conversation Agent)
 - **44 vordefinierte Vorlagen**: Deutsche Aufgabenvorlagen für Heizung, Sicherheit, Sanitär, Geräte, Außen (inkl. Pool), Innen, Elektrik (inkl. Photovoltaik), Garten, Reinigung
 - **Eigene Vorlagen**: Aufgaben als wiederverwendbare Vorlagen speichern, System-Vorlagen ausblenden und wiederherstellen
 - **Eigene Kategorien**: Benutzerdefinierte Kategorien mit Live-Icon-Vorschau und mehrsprachigem Namen
@@ -60,9 +62,13 @@ Eine umfassende HACS Custom Integration zur Planung und Verwaltung von Haushalts
 
 1. Gehe zu **Einstellungen** > **Geräte & Dienste** > **Integration hinzufügen**
 2. Suche nach "Wartungsplaner"
-3. Konfiguriere die Optionen:
-   - **Tage vor Fälligkeit**: Ab wann eine Aufgabe als "Bald fällig" angezeigt wird (Standard: 7 Tage)
-   - **Events aktivieren**: Statusänderungs-Events für Automationen
+
+### Panel-Einstellungen
+
+Über das Zahnrad-Symbol im Aufgaben-Tab lassen sich weitere Einstellungen vornehmen:
+
+- **Tage vor Fälligkeit**: Ab wann eine Aufgabe als "Bald fällig" angezeigt wird (Standard: 7 Tage)
+- **KI-Assistent**: Conversation Agent für die KI-Beschreibungsvorschläge auswählen (z.B. OpenAI, Google AI, Ollama)
 
 ## Verwendung
 
@@ -83,7 +89,8 @@ Beim Erstellen oder Bearbeiten einer Aufgabe stehen folgende Felder zur Verfügu
 | Feld | Beschreibung |
 |------|-------------|
 | Name | Name der Wartungsaufgabe |
-| Beschreibung | Optionale Details zur Aufgabe |
+| Hersteller | Optionale Herstellerangabe (z.B. Bosch, JUDO) |
+| Beschreibung | Optionale Details zur Aufgabe (mit KI-Vorschlag-Button) |
 | Kategorie | Eingebaute oder eigene Kategorie |
 | Priorität | Niedrig, Mittel, Hoch, Kritisch |
 | Intervall | Wiederholungsintervall (Tage/Wochen/Monate/Jahre) |
@@ -142,6 +149,7 @@ service: wartungsplaner.add_task
 data:
   name: "Heizungsfilter wechseln"
   description: "Filter der Heizungsanlage austauschen"
+  manufacturer: "Viessmann"
   category: "heating"
   priority: "high"
   interval_value: 6
