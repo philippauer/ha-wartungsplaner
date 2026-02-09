@@ -348,8 +348,12 @@ class WartungsplanerPanel extends HTMLElement {
     const t = this.t;
     const stats = this._stats;
     const tasks = Object.values(this._tasks);
+    const today = new Date().toISOString().split("T")[0];
     const urgent = tasks
-      .filter((task) => ["overdue", "due", "due_soon", "never_done"].includes(task.status))
+      .filter((task) => {
+        if (task.snoozed_until && task.snoozed_until > today) return false;
+        return ["overdue", "due", "due_soon", "never_done"].includes(task.status);
+      })
       .sort((a, b) => {
         const order = { overdue: 0, due: 1, never_done: 2, due_soon: 3 };
         return (order[a.status] ?? 4) - (order[b.status] ?? 4);
@@ -1009,15 +1013,18 @@ class WartungsplanerPanel extends HTMLElement {
         until.setDate(until.getDate() + days);
         const untilDate = until.toISOString().split("T")[0];
         try {
-          await this._hass.callWS({
+          console.log("Wartungsplaner: Snoozing task", taskId, "until", untilDate);
+          const result = await this._hass.callWS({
             type: "wartungsplaner/snooze_task",
             task_id: taskId,
             until_date: untilDate,
           });
+          console.log("Wartungsplaner: Snooze result", result);
           dialog.remove();
           await this._loadData();
         } catch (e) {
           console.error("Wartungsplaner: Failed to snooze task", e);
+          this._showToast(this._lang === "de" ? "Aufschieben fehlgeschlagen" : "Snooze failed");
         }
       });
     });
