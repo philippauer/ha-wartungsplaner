@@ -255,6 +255,13 @@ class WartungsplanerPanel extends HTMLElement {
   }
 
   connectedCallback() {
+    // Prevent HA keyboard shortcuts (e.g. Assist) from triggering while typing
+    this.shadowRoot.addEventListener("keydown", (e) => {
+      const tag = e.target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") {
+        e.stopPropagation();
+      }
+    });
     this._render();
   }
 
