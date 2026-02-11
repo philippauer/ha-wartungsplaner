@@ -229,7 +229,7 @@ class WartungsplanerPanel extends HTMLElement {
     if (hass && hass.language) {
       this._lang = hass.language.startsWith("de") ? "de" : "en";
     }
-    if (!this._initialized) {
+    if (!this._initialized && this.isConnected) {
       this._initialized = true;
       Promise.all([this._loadCategories(), this._loadSettings()]).then(() => this._loadData());
     }
@@ -262,7 +262,18 @@ class WartungsplanerPanel extends HTMLElement {
         e.stopPropagation();
       }
     });
-    this._render();
+    // Reload data when re-attached to the DOM (e.g. after tab switch)
+    if (this._hass) {
+      this._initialized = true;
+      Promise.all([this._loadCategories(), this._loadSettings()]).then(() => this._loadData());
+    } else {
+      this._initialized = false;
+      this._render();
+    }
+  }
+
+  disconnectedCallback() {
+    this._initialized = false;
   }
 
   async _loadCategories() {
