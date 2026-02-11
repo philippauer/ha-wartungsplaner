@@ -370,6 +370,7 @@ class WartungsplanerPanel extends HTMLElement {
     const urgent = tasks
       .filter((task) => {
         if (task.snoozed_until && task.snoozed_until > today) return false;
+        if (task.status === "snoozed" && task.snoozed_until && task.snoozed_until <= today) return true;
         return ["overdue", "due", "due_soon", "never_done"].includes(task.status);
       })
       .sort((a, b) => {
@@ -377,13 +378,11 @@ class WartungsplanerPanel extends HTMLElement {
         return (order[a.status] ?? 4) - (order[b.status] ?? 4);
       });
 
+    const openCount = urgent.length;
+
     return `
       <div class="overview">
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-number">${stats.total || 0}</div>
-            <div class="stat-label">${t.total}</div>
-          </div>
           <div class="stat-card stat-overdue">
             <div class="stat-number">${stats.overdue || 0}</div>
             <div class="stat-label">${t.overdue}</div>
@@ -395,6 +394,10 @@ class WartungsplanerPanel extends HTMLElement {
           <div class="stat-card stat-done">
             <div class="stat-number">${stats.done || 0}</div>
             <div class="stat-label">${t.done}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">${stats.never_done || 0}</div>
+            <div class="stat-label">${t.neverDone}</div>
           </div>
         </div>
 

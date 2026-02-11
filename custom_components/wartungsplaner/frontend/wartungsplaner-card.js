@@ -166,6 +166,7 @@ class WartungsplanerCard extends HTMLElement {
     return Object.entries(this._data.tasks)
       .filter(([, task]) => {
         if (task.snoozed_until && task.snoozed_until > today) return false;
+        if (task.status === "snoozed" && task.snoozed_until && task.snoozed_until <= today) return true;
         return ["overdue", "due", "due_soon", "never_done"].includes(task.status);
       })
       .sort(([, a], [, b]) => {
