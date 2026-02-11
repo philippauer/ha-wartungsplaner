@@ -66,7 +66,7 @@ async def ws_get_tasks(
 ) -> None:
     """Handle get tasks WebSocket command."""
     coordinator = _get_coordinator(hass)
-    await coordinator.async_request_refresh()
+    await coordinator.async_refresh()
     data = coordinator.data or {"tasks": {}, "stats": {}}
     connection.send_result(msg["id"], data)
 
