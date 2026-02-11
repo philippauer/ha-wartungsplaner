@@ -58,14 +58,15 @@ def _get_store(hass: HomeAssistant):
         vol.Required("type"): "wartungsplaner/get_tasks",
     }
 )
-@callback
-def ws_get_tasks(
+@websocket_api.async_response
+async def ws_get_tasks(
     hass: HomeAssistant,
     connection: websocket_api.ActiveConnection,
     msg: dict[str, Any],
 ) -> None:
     """Handle get tasks WebSocket command."""
     coordinator = _get_coordinator(hass)
+    await coordinator.async_request_refresh()
     data = coordinator.data or {"tasks": {}, "stats": {}}
     connection.send_result(msg["id"], data)
 
