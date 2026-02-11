@@ -33,8 +33,9 @@ const STRINGS = {
     search: "Suchen...",
     filterAll: "Alle",
     noTasks: "Keine Aufgaben vorhanden",
-    noUrgent: "Keine dringenden Aufgaben",
-    urgentTasks: "Dringende Aufgaben",
+    noUrgent: "Keine fälligen Aufgaben",
+    dueTasks: "Fällige Aufgaben",
+    neverDoneTasks: "Nie erledigte Aufgaben",
     lastCompleted: "Zuletzt erledigt",
     leaveBlankToday: "Leer = Heute",
     nextDue: "Nächste Fälligkeit",
@@ -125,8 +126,9 @@ const STRINGS = {
     search: "Search...",
     filterAll: "All",
     noTasks: "No tasks available",
-    noUrgent: "No urgent tasks",
-    urgentTasks: "Urgent Tasks",
+    noUrgent: "No due tasks",
+    dueTasks: "Due Tasks",
+    neverDoneTasks: "Never Done Tasks",
     lastCompleted: "Last completed",
     leaveBlankToday: "Leave blank for today",
     nextDue: "Next due",
@@ -367,18 +369,22 @@ class WartungsplanerPanel extends HTMLElement {
     const stats = this._stats;
     const tasks = Object.values(this._tasks);
     const today = new Date().toISOString().split("T")[0];
-    const urgent = tasks
+    const dueTasks = tasks
       .filter((task) => {
         if (task.snoozed_until && task.snoozed_until > today) return false;
         if (task.status === "snoozed" && task.snoozed_until && task.snoozed_until <= today) return true;
-        return ["overdue", "due", "due_soon", "never_done"].includes(task.status);
+        return ["overdue", "due", "due_soon"].includes(task.status);
       })
       .sort((a, b) => {
-        const order = { overdue: 0, due: 1, never_done: 2, due_soon: 3 };
-        return (order[a.status] ?? 4) - (order[b.status] ?? 4);
+        const order = { overdue: 0, due: 1, due_soon: 2 };
+        return (order[a.status] ?? 3) - (order[b.status] ?? 3);
       });
 
-    const openCount = urgent.length;
+    const neverDoneTasks = tasks
+      .filter((task) => {
+        if (task.snoozed_until && task.snoozed_until > today) return false;
+        return task.status === "never_done";
+      });
 
     return `
       <div class="overview">
@@ -401,12 +407,17 @@ class WartungsplanerPanel extends HTMLElement {
           </div>
         </div>
 
-        <h2>${t.urgentTasks}</h2>
+        <h2>${t.dueTasks}</h2>
         ${
-          urgent.length === 0
+          dueTasks.length === 0
             ? `<div class="empty-state"><ha-icon icon="mdi:check-all"></ha-icon><p>${t.noUrgent}</p></div>`
-            : `<div class="task-list">${urgent.map((task) => this._renderTaskCard(task, "overview")).join("")}</div>`
+            : `<div class="task-list">${dueTasks.map((task) => this._renderTaskCard(task, "overview")).join("")}</div>`
         }
+
+        ${neverDoneTasks.length > 0 ? `
+          <h2>${t.neverDoneTasks}</h2>
+          <div class="task-list">${neverDoneTasks.map((task) => this._renderTaskCard(task, "overview")).join("")}</div>
+        ` : ""}
       </div>
     `;
   }
